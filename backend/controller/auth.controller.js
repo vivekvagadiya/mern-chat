@@ -1,8 +1,8 @@
 // backend/controller/auth.controller.js
 const User = require("../models/user.model");
-const { apiResponse } = require("../utils/apiResponse");
 const asyncHandler = require("../utils/asyncHandler");
 const authService = require("../services/auth.service");
+const apiResponse = require("../utils/apiResponse");
 
 // Register
 const register = asyncHandler(async (req, res) => {

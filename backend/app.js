@@ -10,6 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 const authRoutes = require("./routes/auth.routes");
+const chatRoutes = require("./routes/chat.routes");
 
 app.use(
   cors({
@@ -35,6 +36,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/chat", chatRoutes);
 
 app.use((req, res) => {
   return res.status(404).json({

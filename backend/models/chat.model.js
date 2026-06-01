@@ -50,6 +50,16 @@ const chatSchema = new Schema(
 );
 
 // Add an index on participants for faster queries to find chats for a user
-chatSchema.index({ participants: 1 });
+chatSchema.index({ type: 1, participants: 1 });
+
+chatSchema.pre("validate", function () {
+  if (this.type === "direct" && this.participants.length !== 2) {
+    throw new Error("Direct chat must contain exactly 2 participants");
+  }
+
+  if (this.type === "group" && this.participants.length < 3) {
+    throw new Error("Group chat must contain at least 3 participants");
+  }
+});
 
 module.exports = mongoose.model("Chat", chatSchema);
