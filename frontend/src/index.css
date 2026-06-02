@@ -1,0 +1,173 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(160, 160, 168, 0.3);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(160, 160, 168, 0.5);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-color: rgba(160, 160, 168, 0.3) transparent;
+  scrollbar-width: thin;
+}
+
+/* Global animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Glassmorphism utilities */
+.glass-surface {
+  @apply bg-glass backdrop-blur-lg border border-glass rounded-xl;
+}
+
+.glass-surface-dark {
+  @apply bg-glass-dark backdrop-blur-xl border border-glass-light rounded-xl;
+}
+
+/* Premium shadows */
+.shadow-premium {
+  @apply shadow-elevation-3;
+}
+
+.shadow-premium-sm {
+  @apply shadow-elevation-1;
+}
+
+/* Text utilities */
+.truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.truncate-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  /* Mobile optimizations */
+  body {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* Focus utilities for accessibility */
+button:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+}
+
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  @apply outline-2 outline-offset-2 outline-primary;
+}
+
+/* Smooth transitions */
+* {
+  @apply transition-colors duration-200;
+}
+
+button, [role="button"] {
+  @apply transition-all duration-200;
+}
+
+/* Loading animation */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 20%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Selection styling */
+::selection {
+  @apply bg-primary/30 text-dark-text;
+}
+
+/* Placeholder styling */
+::placeholder {
+  @apply text-dark-text-muted;
+}
+
+/* Disabled state */
+:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
