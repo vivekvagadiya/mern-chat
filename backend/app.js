@@ -6,8 +6,6 @@ const logger = require("./config/logger");
 const errorHandler = require("./middleware/error.middleware");
 
 app.use(helmet());
-app.use(cors());
-app.use(express.json());
 
 const authRoutes = require("./routes/auth.routes");
 const chatRoutes = require("./routes/chat.routes");
@@ -26,6 +24,7 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   }),
 );
+app.use(express.json());
 
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url}`, {
