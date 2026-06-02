@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      default: "Hey there! I am using RealtimeHub",
+      default: "Hey there! I am using chat",
     },
     isOnline: {
       type: Boolean,

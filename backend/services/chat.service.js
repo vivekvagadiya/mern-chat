@@ -55,7 +55,7 @@ const getUserChats = async (userId) => {
     .populate({
       path: "lastMessage",
       populate: {
-        path: "sender",
+        path: "senderId",
         select: "username avatar",
       },
     })
@@ -70,7 +70,7 @@ const getChatById = async (chatId, userId = null) => {
     .populate({
       path: "lastMessage",
       populate: {
-        path: "sender",
+        path: "senderId",
         select: "username avatar",
       },
     });
