@@ -2,6 +2,9 @@ import React, { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import RegisterPage from './pages/RegisterPage.jsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
 import store from './store/index.js';
 
 function AppContent() {
@@ -15,7 +18,13 @@ function AppContent() {
 
   return (
     <Routes>
-      <Route path="*" element={<MainLayout />} />
+      {/* Authentication Routes */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      
+      {/* Main App Routes */}
+      <Route path="/*" element={<MainLayout />} />
     </Routes>
   );
 }

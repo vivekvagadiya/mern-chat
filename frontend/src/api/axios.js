@@ -1,0 +1,127 @@
+// src/api/axiosInstance.js
+
+import axios from "axios";
+import { tokenService } from "./tokenService";
+import { toast } from 'sonner';
+
+//  Main API client
+const axiosInstance= axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  withCredentials: true,
+});
+
+//  Separate client for refresh (NO interceptors)
+const refreshClient = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  withCredentials: true,
+});
+
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+//  Notify queued requests
+const onRefreshed = (newToken) => {
+  refreshSubscribers.forEach((callback) => callback(newToken));
+  refreshSubscribers = [];
+};
+
+//  Add subscriber
+const addSubscriber = (callback) => {
+  refreshSubscribers.push(callback);
+};
+
+// ============================
+//  REQUEST INTERCEPTOR
+// ============================
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = tokenService.getAccessToken();
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    // 1. NETWORK ERRORS (Server is down)
+    if (!error.response) {
+      toast.error("Network error. Please check your internet connection.");
+      return Promise.reject(error);
+    }
+
+    const status = error.response.status;
+    const errorMessage = error.response.data?.message || "Something went wrong";
+
+    // 2. LOGOUT LOGIC (Session Versioning / Refresh Failed)
+    // We handle the specific 401 redirect errors in the catch block below.
+    
+    // 3. OTHER ERRORS (403, 400, 404, 500)
+    // We ignore 401 here because it might be refreshed successfully.
+    if (status !== 401) {
+      toast.error(errorMessage);
+      return Promise.reject(error.response?.data || error);
+    }
+
+    // --- 401 Handling Logic ---
+    if (originalRequest.url.includes("/auth/login")) {
+      toast.error(errorMessage); // Wrong password/email
+      return Promise.reject(error.response?.data || error);
+    }
+
+    if (originalRequest._retry || originalRequest.url.includes("/auth/refresh")) {
+      return Promise.reject(error.response?.data || error);
+    }
+
+    originalRequest._retry = true;
+
+    if (isRefreshing) {
+      return new Promise((resolve) => {
+        addSubscriber((newToken) => {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          resolve(axiosInstance(originalRequest));
+        });
+      });
+    }
+
+    isRefreshing = true;
+
+    try {
+      const refreshToken = tokenService.getRefreshToken();
+      if (!refreshToken) throw new Error("No refresh token available");
+
+      const response = await refreshClient.post("/auth/refresh", { refreshToken });
+      const { accessToken, refreshToken: newRefreshToken } = response.data.data;
+
+      tokenService.setTokens({ accessToken, refreshToken: newRefreshToken });
+      onRefreshed(accessToken);
+      originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+
+      return axiosInstance(originalRequest);
+    } catch (err) {
+      // 4. SESSION KILLED (Single session logic triggered here)
+      const sessionError = err.response?.data?.message || "Session expired. Please login again.";
+      
+      toast.error(sessionError, { id: "session-expired" }); // Use an ID to prevent duplicate toasts
+
+      refreshSubscribers = [];
+      tokenService.clearTokens();
+      window.location.href = "/login";
+
+      return Promise.reject(err.response?.data || err);
+    } finally {
+      isRefreshing = false;
+    }
+  },
+);
+
+export default axiosInstance;
