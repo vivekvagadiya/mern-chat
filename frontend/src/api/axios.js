@@ -2,7 +2,22 @@
 
 import axios from "axios";
 import { tokenService } from "./tokenService";
-import { toast } from 'sonner';
+
+// Create a toast event system for non-React contexts
+let toastHandler = null;
+
+export const setToastHandler = (handler) => {
+  toastHandler = handler;
+};
+
+const showToast = (type, message, options = {}) => {
+  if (toastHandler) {
+    toastHandler(type, message, options);
+  } else {
+    // Fallback to console if toast not available
+    console.log(`[${type.toUpperCase()}] ${message}`);
+  }
+};
 
 //  Main API client
 const axiosInstance= axios.create({
@@ -55,7 +70,7 @@ axiosInstance.interceptors.response.use(
 
     // 1. NETWORK ERRORS (Server is down)
     if (!error.response) {
-      toast.error("Network error. Please check your internet connection.");
+      showToast("error", "Network error. Please check your internet connection.");
       return Promise.reject(error);
     }
 
@@ -68,13 +83,13 @@ axiosInstance.interceptors.response.use(
     // 3. OTHER ERRORS (403, 400, 404, 500)
     // We ignore 401 here because it might be refreshed successfully.
     if (status !== 401) {
-      toast.error(errorMessage);
+      showToast("error", errorMessage);
       return Promise.reject(error.response?.data || error);
     }
 
     // --- 401 Handling Logic ---
     if (originalRequest.url.includes("/auth/login")) {
-      toast.error(errorMessage); // Wrong password/email
+      showToast("error", errorMessage); // Wrong password/email
       return Promise.reject(error.response?.data || error);
     }
 
@@ -111,7 +126,7 @@ axiosInstance.interceptors.response.use(
       // 4. SESSION KILLED (Single session logic triggered here)
       const sessionError = err.response?.data?.message || "Session expired. Please login again.";
       
-      toast.error(sessionError, { id: "session-expired" }); // Use an ID to prevent duplicate toasts
+      showToast("error", sessionError, { id: "session-expired" }); // Use an ID to prevent duplicate toasts
 
       refreshSubscribers = [];
       tokenService.clearTokens();

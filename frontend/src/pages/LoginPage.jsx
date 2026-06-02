@@ -3,11 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import AuthLayout from '../layouts/AuthLayout';
+import { loginUser } from '../api/auth.api';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    email: 'vivek@yopmail.com',
+    password: 'Test@123'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,8 +63,8 @@ const LoginPage = () => {
       console.log('Login data:', formData);
       
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      const response=await loginUser(formData);
+
       // TODO: Handle successful login
       navigate('/chat');
     } catch (error) {

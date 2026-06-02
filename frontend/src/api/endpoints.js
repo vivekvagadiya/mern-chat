@@ -5,9 +5,7 @@ const endpoints = {
     login: `/auth/login`,
     register: `/auth/register`,
     logout: `/auth/logout`,
-  },
-  user:{
-    profile:"/users/profile"
+    profile:"/auth/me"
   },
   conversation:{
     getConversations:"/conversations",

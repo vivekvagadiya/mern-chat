@@ -3,7 +3,7 @@ import endpoints from "./endpoints";
 
 export const getProfile = async () => {
   try {
-    const response = await axiosInstance.get(endpoints.user.profile);
+    const response = await axiosInstance.get(endpoints.auth.profile);
     return response?.data;
   } catch (error) {
     // Return consistent error structure
