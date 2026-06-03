@@ -63,6 +63,18 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => {
+    // Show success toast for successful operations (optional)
+    const method = response.config.method?.toUpperCase();
+    const url = response.config.url;
+    
+    // Show success for POST/PUT/DELETE operations (but not for login/register as they handle their own toasts)
+    if (['POST', 'PUT', 'DELETE'].includes(method) && 
+        !url?.includes('/auth/login') && 
+        !url?.includes('/auth/register') &&
+        response.data?.message) {
+      showToast("success", response.data.message);
+    }
+    
     return response;
   },
   async (error) => {
@@ -83,7 +95,26 @@ axiosInstance.interceptors.response.use(
     // 3. OTHER ERRORS (403, 400, 404, 500)
     // We ignore 401 here because it might be refreshed successfully.
     if (status !== 401) {
-      showToast("error", errorMessage);
+      // Enhanced error handling with specific messages
+      let errorTitle = "Error";
+      switch (status) {
+        case 400:
+          errorTitle = "Bad Request";
+          break;
+        case 403:
+          errorTitle = "Access Denied";
+          break;
+        case 404:
+          errorTitle = "Not Found";
+          break;
+        case 500:
+          errorTitle = "Server Error";
+          break;
+      }
+      
+      showToast("error", `${errorTitle}: ${errorMessage}`, {
+        duration: status === 500 ? 6000 : 4000 // Longer duration for server errors
+      });
       return Promise.reject(error.response?.data || error);
     }
 

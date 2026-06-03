@@ -11,10 +11,16 @@ import {
   LogOut,
   ChevronRight,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { setSettingsOpen } from '../../store/slices/uiSlice';
+import { useToast } from '../ToastContainer';
+import { logoutApi } from '../../api/auth.api';
+import { logout } from '../../store/slices/authSlice';
 
 export default function SettingsPanel() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const toast=useToast();
   const { settingsOpen } = useSelector(state => state.ui);
   const [activeSection, setActiveSection] = useState('general');
   const [settings, setSettings] = useState({
@@ -30,6 +36,19 @@ export default function SettingsPanel() {
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'privacy', label: 'Privacy & Safety', icon: Lock },
   ];
+
+  const handleLogout=async()=>{
+    try {
+      await logoutApi();
+      toast.success('Logout successful!');
+      dispatch(setSettingsOpen(false));
+      dispatch(logout());
+      // Navigate to login page
+      navigate('/login');
+    } catch (error) {
+      toast.error(error.message || 'Failed to logout');
+    }
+  }
 
   return (
     <AnimatePresence>
@@ -244,6 +263,7 @@ export default function SettingsPanel() {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           className="w-full px-4 py-2.5 bg-error/10 hover:bg-error/20 text-error rounded-lg transition-colors flex items-center justify-between font-medium text-sm"
+                          onClick={handleLogout}
                         >
                           <span>Logout</span>
                           <LogOut size={16} />

@@ -6,12 +6,14 @@ import AuthLayout from '../layouts/AuthLayout';
 import { loginUser } from '../api/auth.api';
 import { useDispatch } from 'react-redux';
 import { login } from '../store/slices/authSlice';
+import { useToast } from '../components/ToastContainer';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: 'vivek@yopmail.com',
-    password: 'Test@123'
+    password: 'Test@123',
   });
+  const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -20,55 +22,57 @@ const LoginPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: '',
       }));
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
-    
+
     return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validateForm();
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    
+
     setIsLoading(true);
     try {
       const response = await loginUser(formData);
-      
+
       // Update Redux auth state with user data
       if (response?.data?.user) {
         dispatch(login(response.data.user));
       }
-      
+
+      toast.success('Login successful!');
+
       // Navigate to chat page
       navigate('/chat');
     } catch (error) {
@@ -107,9 +111,7 @@ const LoginPage = () => {
               disabled={isLoading}
             />
           </div>
-          {errors.email && (
-            <p className="mt-1 text-sm text-red-400">{errors.email}</p>
-          )}
+          {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
         </div>
 
         {/* Password Field */}
@@ -139,16 +141,10 @@ const LoginPage = () => {
               className="absolute inset-y-0 right-0 pr-3 flex items-center text-white/50 hover:text-white/70 transition-colors"
               disabled={isLoading}
             >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
-          {errors.password && (
-            <p className="mt-1 text-sm text-red-400">{errors.password}</p>
-          )}
+          {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
         </div>
 
         {/* Remember Me & Forgot Password */}

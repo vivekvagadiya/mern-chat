@@ -11,11 +11,7 @@ export const loginUser = async (data) => {
     return response?.data;
   } catch (error) {
     // Return consistent error structure
-    const errorData = error?.response?.data || {};
-    throw {
-      message: errorData?.message || "Login failed. Please try again.",
-      data: errorData
-    };
+   throw error?.errors?.[0] || error
   }
 };
 
