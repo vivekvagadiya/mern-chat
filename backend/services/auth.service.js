@@ -26,22 +26,35 @@ const register = async (username, email, password) => {
 };
 
 const login = async (email, password) => {
-  const user = await User.findOne({ email }).select("+password");
-  console.log("user", user);
+  const user = await User.findOne({ email }).select("+password").lean(false);
 
   if (!user) {
-    throw new Error("User not found");
+    throw new Error("Invalid credentials");
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
+
   if (!isMatch) {
-    throw new Error("Invalid password");
+    throw new Error("Invalid credentials");
   }
 
-  user.tokenVersion = (user.tokenVersion || 0) + 1;
+  user.tokenVersion += 1;
+
   const tokens = generateTokens(user);
-  user.refreshToken = tokens.refreshToken;
-  await user.save();
+
+  await User.updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        refreshToken: tokens.refreshToken,
+        isOnline: true,
+        lastSeen: new Date(),
+      },
+      $inc: {
+        tokenVersion: 1,
+      },
+    },
+  );
 
   return {
     user: {
@@ -63,11 +76,11 @@ const refreshToken = async (refreshToken) => {
   const user = await User.findById(decoded.userId);
 
   if (!user) {
-    throw new Error("User not found");
+    throw new Error("Invalid refresh token");
   }
 
   if (user.refreshToken !== refreshToken) {
-    throw new Error("Invalid refresh token");
+    throw new Error("Refresh token mismatch");
   }
 
   const tokens = generateTokens(user);
