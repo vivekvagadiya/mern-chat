@@ -11,16 +11,9 @@ import {
   Archive,
   Menu,
 } from 'lucide-react';
-import {
-  toggleSearch,
-  setNotificationsOpen,
-  setUserProfileOpen,
-  setSettingsOpen,
-  setSidebarOpen,
-  setCurrentConversation,
-} from '../../store/index.js';
-import { getTimeAgo } from '../../mock/data.js';
 import ConversationItem from '../../components/chat/ConversationItem';
+import { setCurrentConversation } from '../../store/slices/chatSlice';
+import { setNotificationsOpen, setSettingsOpen, setSidebarOpen, toggleSearch } from '../../store/slices/uiSlice';
 
 export default function Sidebar() {
   const dispatch = useDispatch();

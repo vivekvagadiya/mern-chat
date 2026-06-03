@@ -1,14 +1,34 @@
 import React, { useEffect } from 'react';
-import { Provider } from 'react-redux';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
-import store from './store/index.js';
-import { AuthInitializer } from './components/AuthInitializer.jsx';
 import { ToastProvider, useToast } from './components/ToastContainer.jsx';
 import { setToastHandler } from './api/axios.js';
+import { useSelector } from 'react-redux';
+
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, isInitialized } = useSelector((s) => s.auth);
+
+  if (!isInitialized) {
+    // return <AppLoader />;
+    return <div>loading111...</div>;
+  }
+
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+}
+
+function PublicRoute({ children }) {
+  const { isAuthenticated, isInitialized } = useSelector((s) => s.auth);
+
+  if (!isInitialized) {
+    // return <ChatWindowSkeleton />;
+    return <div>loading...</div>;
+  }
+
+  return isAuthenticated ? <Navigate to="/chat" replace /> : children;
+}
 
 function AppContent() {
   const toast = useToast();
@@ -32,26 +52,48 @@ function AppContent() {
   return (
     <Routes>
       {/* Authentication Routes */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <LoginPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <PublicRoute>
+            <RegisterPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicRoute>
+            <ForgotPasswordPage />
+          </PublicRoute>
+        }
+      />
 
       {/* Main App Routes */}
-      <Route path="/*" element={<MainLayout />} />
+      <Route
+        path="/*"
+        element={
+          <ProtectedRoute>
+            <MainLayout />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
 
 export default function App() {
   return (
-    <Provider store={store}>
-      <ToastProvider>
-        <AuthInitializer>
-          <Router>
-            <AppContent />
-          </Router>
-        </AuthInitializer>
-      </ToastProvider>
-    </Provider>
+    <Router>
+      <AppContent />
+    </Router>
   );
 }

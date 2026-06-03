@@ -10,10 +10,11 @@ import {
   Check,
   CheckCheck,
 } from 'lucide-react';
-import { setSidebarOpen, markAsRead, setCurrentConversation } from '../../store/index.js';
 import { getTimeAgo } from '../../mock/data.js';
 import MessageBubble from '../chat/MessageBubble';
 import MessageComposer from '../chat/MessageComposer';
+import { setSidebarOpen } from '../../store/slices/uiSlice.js';
+import { markAsRead } from '../../store/slices/chatSlice.js';
 
 export default function ChatArea() {
   const dispatch = useDispatch();

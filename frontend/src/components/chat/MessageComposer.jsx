@@ -9,7 +9,7 @@ import {
   Plus,
   X,
 } from 'lucide-react';
-import { addMessage } from '../../store/index.js';
+import { addMessage } from '../../store/slices/chatSlice.js';
 
 export default function MessageComposer({ conversationId }) {
   const dispatch = useDispatch();

@@ -7,7 +7,7 @@ import SearchModal from '../components/modals/SearchModal';
 import NotificationsPanel from '../components/panels/NotificationsPanel';
 import UserProfilePanel from '../components/panels/UserProfilePanel';
 import SettingsPanel from '../components/panels/SettingsPanel';
-import { setMobileView, setSidebarOpen } from '../store/index.js';
+import { setMobileView, setSidebarOpen } from '../store/slices/uiSlice';
 
 export default function MainLayout() {
   const dispatch = useDispatch();

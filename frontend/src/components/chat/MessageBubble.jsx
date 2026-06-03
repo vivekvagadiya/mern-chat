@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, Reply, Edit, Trash2, Smile, Check, CheckCheck } from 'lucide-react';
-import { addReaction } from '../../store/index.js';
 import { getTimeAgo } from '../../mock/data.js';
+import { addReaction } from '../../store/slices/chatSlice.js';
 
 const EMOJI_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🎉', '🚀', '✨'];
 

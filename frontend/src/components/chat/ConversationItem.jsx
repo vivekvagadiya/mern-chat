@@ -2,8 +2,8 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Pin, Star, MoreVertical } from 'lucide-react';
-import { togglePinned, toggleFavorite } from '../../store/index.js';
 import { getTimeAgo } from '../../mock/data.js';
+import { toggleFavorite } from '../../store/slices/chatSlice.js';
 
 export default function ConversationItem({ conversation }) {
   const dispatch = useDispatch();

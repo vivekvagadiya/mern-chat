@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Search, User, MessageSquare, Hash } from 'lucide-react';
-import { setSearchOpen, setCurrentConversation } from '../../store/index.js';
 import { mockSearchResults } from '../../mock/data.js';
+import { setSearchOpen } from '../../store/slices/uiSlice.js';
+import { setCurrentConversation } from '../../store/slices/chatSlice.js';
 
 export default function SearchModal() {
   const dispatch = useDispatch();

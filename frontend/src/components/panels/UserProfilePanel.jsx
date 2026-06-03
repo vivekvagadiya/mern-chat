@@ -2,7 +2,7 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Copy, Phone, Video, MoreVertical, MapPin, Briefcase } from 'lucide-react';
-import { setUserProfileOpen } from '../../store/index.js';
+import { setUserProfileOpen } from '../../store/slices/uiSlice';
 
 export default function UserProfilePanel() {
   const dispatch = useDispatch();

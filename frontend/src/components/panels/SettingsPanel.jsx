@@ -11,7 +11,7 @@ import {
   LogOut,
   ChevronRight,
 } from 'lucide-react';
-import { setSettingsOpen } from '../../store/index.js';
+import { setSettingsOpen } from '../../store/slices/uiSlice';
 
 export default function SettingsPanel() {
   const dispatch = useDispatch();

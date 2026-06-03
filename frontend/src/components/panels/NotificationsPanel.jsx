@@ -2,12 +2,8 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Trash2, Bell } from 'lucide-react';
-import {
-  setNotificationsOpen,
-  markNotificationRead,
-  removeNotification,
-  markAllNotificationsRead,
-} from '../../store/index.js';
+import { setNotificationsOpen } from '../../store/slices/uiSlice';
+import { markAllNotificationsRead, markNotificationRead, removeNotification } from '../../store/slices/notificationsSlice';
 
 export default function NotificationsPanel() {
   const dispatch = useDispatch();

@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import AuthLayout from '../layouts/AuthLayout';
 import { loginUser } from '../api/auth.api';
+import { useDispatch } from 'react-redux';
+import { login } from '../store/slices/authSlice';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +16,7 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -59,16 +62,17 @@ const LoginPage = () => {
     
     setIsLoading(true);
     try {
-      // TODO: Integrate API call here
-      console.log('Login data:', formData);
+      const response = await loginUser(formData);
       
-      // Simulate API call
-      const response=await loginUser(formData);
-
-      // TODO: Handle successful login
+      // Update Redux auth state with user data
+      if (response?.data?.user) {
+        dispatch(login(response.data.user));
+      }
+      
+      // Navigate to chat page
       navigate('/chat');
     } catch (error) {
-      setErrors({ general: 'Invalid email or password' });
+      setErrors({ general: error.message || 'Invalid email or password' });
     } finally {
       setIsLoading(false);
     }
