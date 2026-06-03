@@ -2,6 +2,7 @@
 const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const { generateTokens } = require("../utils/generateTokens.js");
+const bcrypt = require("bcrypt");
 
 const register = async (username, email, password) => {
   const existingUser = await User.findOne({
@@ -26,18 +27,21 @@ const register = async (username, email, password) => {
 
 const login = async (email, password) => {
   const user = await User.findOne({ email }).select("+password");
-  console.log('user',user);
-  
-  if (!user || !(await user.comparePassword(password))) {
-    throw new Error("Invalid credentials");
+  console.log("user", user);
+
+  if (!user) {
+    throw new Error("User not found");
   }
 
-  // Update online status
-  user.isOnline = true;
-  user.lastSeen = new Date();
-  await user.save();
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new Error("Invalid password");
+  }
 
-  const tokens = generateTokens(user._id);
+  user.tokenVersion = (user.tokenVersion || 0) + 1;
+  const tokens = generateTokens(user);
+  user.refreshToken = tokens.refreshToken;
+  await user.save();
 
   return {
     user: {
@@ -59,10 +63,16 @@ const refreshToken = async (refreshToken) => {
   const user = await User.findById(decoded.userId);
 
   if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.refreshToken !== refreshToken) {
     throw new Error("Invalid refresh token");
   }
 
-  const tokens = generateTokens(user._id);
+  const tokens = generateTokens(user);
+  user.refreshToken = tokens.refreshToken;
+  await user.save();
   return tokens;
 };
 
