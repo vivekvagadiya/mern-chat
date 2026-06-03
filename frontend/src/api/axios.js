@@ -68,12 +68,12 @@ axiosInstance.interceptors.response.use(
     const url = response.config.url;
     
     // Show success for POST/PUT/DELETE operations (but not for login/register as they handle their own toasts)
-    if (['POST', 'PUT', 'DELETE'].includes(method) && 
-        !url?.includes('/auth/login') && 
-        !url?.includes('/auth/register') &&
-        response.data?.message) {
-      showToast("success", response.data.message);
-    }
+    // if (['POST', 'PUT', 'DELETE'].includes(method) && 
+    //     !url?.includes('/auth/login') && 
+    //     !url?.includes('/auth/register') &&
+    //     response.data?.message) {
+    //   showToast("success", response.data.message);
+    // }
     
     return response;
   },

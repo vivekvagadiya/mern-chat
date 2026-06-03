@@ -1,14 +1,18 @@
 import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { tokenService } from '../api/tokenService';
 import { fetchUserProfile } from '../store/actions/user.actions';
 import { logout, setInitialized } from '../store/slices/authSlice';
 
 export function AuthInitializer({ children }) {
   const dispatch = useDispatch();
+  const {isAuthenticated, isInitialized}=useSelector(state=>state.auth)
 
   useEffect(() => {
     const initializeAuth = async () => {
+      // Skip if already initialized
+      if (isInitialized) return;
+      
       const accessToken = tokenService.getAccessToken();
       
       if (accessToken) {
@@ -26,7 +30,7 @@ export function AuthInitializer({ children }) {
     };
 
     initializeAuth();
-  }, [dispatch]);
+  }, [dispatch, isInitialized]);
 
   return children;
 }

@@ -4,9 +4,11 @@ import MainLayout from './layouts/MainLayout.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import NotFoundPage from './pages/NotFoundPage.jsx';
 import { ToastProvider, useToast } from './components/ToastContainer.jsx';
 import { setToastHandler } from './api/axios.js';
 import { useSelector } from 'react-redux';
+import { AuthInitializer } from './components/AuthInitializer.jsx';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, isInitialized } = useSelector((s) => s.auth);
@@ -27,7 +29,7 @@ function PublicRoute({ children }) {
     return <div>loading...</div>;
   }
 
-  return isAuthenticated ? <Navigate to="/chat" replace /> : children;
+  return isAuthenticated ? <Navigate to="/" replace /> : children;
 }
 
 function AppContent() {
@@ -79,13 +81,16 @@ function AppContent() {
 
       {/* Main App Routes */}
       <Route
-        path="/*"
+        path="/"
         element={
           <ProtectedRoute>
             <MainLayout />
           </ProtectedRoute>
         }
       />
+
+      {/* 404/Not Found Route */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
@@ -93,7 +98,9 @@ function AppContent() {
 export default function App() {
   return (
     <Router>
-      <AppContent />
+      <AuthInitializer>
+        <AppContent />
+      </AuthInitializer>
     </Router>
   );
 }

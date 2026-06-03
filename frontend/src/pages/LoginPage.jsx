@@ -6,6 +6,7 @@ import AuthLayout from '../layouts/AuthLayout';
 import { loginUser } from '../api/auth.api';
 import { useDispatch } from 'react-redux';
 import { login } from '../store/slices/authSlice';
+import { fetchUserProfile } from '../store/actions/user.actions';
 import { useToast } from '../components/ToastContainer';
 
 const LoginPage = () => {
@@ -64,17 +65,16 @@ const LoginPage = () => {
 
     setIsLoading(true);
     try {
+      // Step 1: Login and store tokens
       const response = await loginUser(formData);
 
-      // Update Redux auth state with user data
-      if (response?.data?.user) {
-        dispatch(login(response.data.user));
-      }
+      // Step 2: Fetch complete user profile
+      await dispatch(fetchUserProfile()).unwrap();
 
       toast.success('Login successful!');
 
-      // Navigate to chat page
-      navigate('/chat');
+      // Step 3: Navigate to chat page
+      navigate('/');
     } catch (error) {
       setErrors({ general: error.message || 'Invalid email or password' });
     } finally {
