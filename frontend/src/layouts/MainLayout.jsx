@@ -12,6 +12,11 @@ import { setMobileView, setSidebarOpen } from '../store/slices/uiSlice';
 export default function MainLayout() {
   const dispatch = useDispatch();
   const { sidebarOpen, mobileView } = useSelector(state => state.ui);
+  const connected = useSelector(
+  (state) => state.socket.connected
+);
+
+console.log('connected',connected);
 
   useEffect(() => {
     const handleResize = () => {

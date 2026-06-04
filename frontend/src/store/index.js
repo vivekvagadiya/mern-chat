@@ -4,7 +4,7 @@ import chatReducer from './slices/chatSlice';
 import uiReducer from './slices/uiSlice';
 import usersReducer from './slices/usersSlice';
 import notificationsReducer from './slices/notificationsSlice';
-
+import socketReducer from './slices/socketSlice';
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -12,6 +12,7 @@ export const store = configureStore({
     ui: uiReducer,
     users: usersReducer,
     notifications: notificationsReducer,
+    socket: socketReducer,
   },
 });
 
