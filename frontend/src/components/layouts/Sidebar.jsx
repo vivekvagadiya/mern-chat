@@ -1,39 +1,34 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Search,
-  Settings,
-  Bell,
-  Plus,
-  Pin,
-  Star,
-  Archive,
-  Menu,
-} from 'lucide-react';
+import { Search, Settings, Bell, Plus, Pin, Star, Archive, Menu } from 'lucide-react';
 import ConversationItem from '../../components/chat/ConversationItem';
-import { setCurrentConversation } from '../../store/slices/chatSlice';
-import { setNotificationsOpen, setSettingsOpen, setSidebarOpen, toggleSearch } from '../../store/slices/uiSlice';
+import {
+  setNotificationsOpen,
+  setSettingsOpen,
+  setSidebarOpen,
+  toggleSearch,
+} from '../../store/slices/uiSlice';
 import { useConversation } from '../../hooks/useConversation';
 
 export default function Sidebar() {
   const dispatch = useDispatch();
   const [filter, setFilter] = useState('all'); // all, pinned, favorites
-  const { conversations,messages } = useConversation();
-  console.log('conversations',conversations,messages)
-  const { mobileView } = useSelector(state => state.ui);
+  const { conversations, loading, messages ,selectConversation} = useConversation();
+  console.log('conversations', conversations, messages);
+  const { mobileView } = useSelector((state) => state.ui);
 
-  const pinnedConversations = conversations.filter(c => c.isPinned);
-  const favoriteConversations = conversations.filter(c => c.isFavorite);
+  const pinnedConversations = conversations.filter((c) => c.isPinned);
+  const favoriteConversations = conversations.filter((c) => c.isFavorite);
   const displayConversations =
     filter === 'pinned'
       ? pinnedConversations
       : filter === 'favorites'
-      ? favoriteConversations
-      : conversations;
+        ? favoriteConversations
+        : conversations;
 
   const handleConversationClick = (id) => {
-    dispatch(setCurrentConversation(id));
+    selectConversation(id);
     if (mobileView) {
       dispatch(setSidebarOpen(false));
     }
@@ -58,10 +53,7 @@ export default function Sidebar() {
         </div>
 
         {/* Search Input */}
-        <div
-          onClick={() => dispatch(toggleSearch())}
-          className="relative group cursor-pointer"
-        >
+        <div onClick={() => dispatch(toggleSearch())} className="relative group cursor-pointer">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="relative flex items-center gap-2 bg-dark-surface-alt px-3 py-2 rounded-lg border border-glass hover:border-glass-light transition-all">
             <Search size={16} className="text-dark-text-muted" />
@@ -76,7 +68,7 @@ export default function Sidebar() {
           { id: 'all', label: 'All' },
           { id: 'pinned', label: 'Pinned', icon: Pin, count: pinnedConversations.length },
           { id: 'favorites', label: 'Favorites', icon: Star, count: favoriteConversations.length },
-        ].map(tab => {
+        ].map((tab) => {
           const Icon = tab.icon;
           return (
             <motion.button
@@ -106,33 +98,37 @@ export default function Sidebar() {
           );
         })}
       </div>
-
-      {/* Conversations List */}
-      <div className="flex-1 overflow-y-auto">
-        <motion.div layout className="p-2">
-          <AnimatePresence>
-            {displayConversations.length > 0 ? (
-              displayConversations.map((conversation, index) => (
-                <motion.div
-                  key={conversation._id}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => handleConversationClick(conversation._id)}
-                >
-                  <ConversationItem conversation={conversation} />
-                </motion.div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-dark-text-muted">
-                <p className="text-sm">No conversations</p>
-              </div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto">
+          <motion.div layout className="p-2">
+            <AnimatePresence>
+              {displayConversations.length > 0 ? (
+                displayConversations.map((conversation, index) => (
+                  <motion.div
+                    key={conversation._id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => handleConversationClick(conversation._id)}
+                  >
+                    <ConversationItem conversation={conversation} />
+                  </motion.div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-dark-text-muted">
+                  <p className="text-sm">No conversations</p>
+                </div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </div>
+      )}
 
       {/* Footer - Actions */}
       <div className="p-4 border-t border-dark-border flex items-center justify-between">

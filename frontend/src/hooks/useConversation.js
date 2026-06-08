@@ -6,7 +6,7 @@ import { markConversationAsRead, setCurrentConversation } from '../store/slices/
 
 export const useConversation = () => {
   const dispatch = useDispatch();
-  const { conversations, currentConversationId, messages, loading, messageLoading, error } =
+  const { conversations, currentConversationId, messages, loading, messagesLoading, error } =
     useSelector((state) => state.chat);
 
   useEffect(() => {
@@ -25,14 +25,14 @@ export const useConversation = () => {
   };
 
   const currentMessages = messages?.message?.[currentConversationId] || [];
-  const currnetConversation = conversations?.find((conv) => conv._id === currentConversationId);
+  const currentConversation  = conversations?.find((conv) => conv._id === currentConversationId);
 
   return {
     conversations,
     messages: currentMessages,
-    currentConversation: currnetConversation,
+    currentConversation: currentConversation,
     loading,
-    messageLoading,
+    messagesLoading,
     error,
     selectConversation,
     refetchConversations: () => dispatch(fetchConversation()),
