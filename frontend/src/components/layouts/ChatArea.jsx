@@ -14,7 +14,7 @@ import { getTimeAgo } from '../../mock/data.js';
 import MessageBubble from '../chat/MessageBubble';
 import MessageComposer from '../chat/MessageComposer';
 import { setSidebarOpen } from '../../store/slices/uiSlice.js';
-import { markAsRead } from '../../store/slices/chatSlice.js';
+import { markConversationAsRead } from '../../store/slices/chatSlice.js';
 
 export default function ChatArea() {
   const dispatch = useDispatch();
@@ -22,12 +22,12 @@ export default function ChatArea() {
   const { conversations, messages, currentConversationId } = useSelector(state => state.chat);
   const { mobileView } = useSelector(state => state.ui);
 
-  const currentConversation = conversations.find(c => c.id === currentConversationId);
+  const currentConversation = conversations.find(c => c._id === currentConversationId);
   const currentMessages = messages[currentConversationId] || [];
 
   useEffect(() => {
     if (currentConversationId) {
-      dispatch(markAsRead(currentConversationId));
+      dispatch(markConversationAsRead(currentConversationId));
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [currentConversationId, dispatch, currentMessages.length]);

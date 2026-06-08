@@ -8,7 +8,7 @@ import { toggleFavorite } from '../../store/slices/chatSlice.js';
 export default function ConversationItem({ conversation }) {
   const dispatch = useDispatch();
   const currentConversationId = useSelector(state => state.chat.currentConversationId);
-  const isActive = conversation.id === currentConversationId;
+  const isActive = conversation._id === currentConversationId;
   const [showActions, setShowActions] = React.useState(false);
 
   const getStatusIndicator = (status) => {
@@ -30,11 +30,11 @@ export default function ConversationItem({ conversation }) {
       <div className="p-3 flex items-start gap-3">
         {/* Avatar & Status */}
         <div className="relative flex-shrink-0">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg">
+          {/* <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg">
             {conversation.avatar}
-          </div>
-          {conversation.type === 'direct' && conversation.status && (
-            <div className={`absolute bottom-0 right-0 w-3 h-3 ${getStatusIndicator(conversation.status)} rounded-full border border-dark-surface`} />
+          </div> */}
+          {conversation.type === 'direct' && conversation.isActive && (
+            <div className={`absolute bottom-0 right-0 w-3 h-3 ${getStatusIndicator(conversation.isActive)} rounded-full border border-dark-surface`} />
           )}
         </div>
 
@@ -45,17 +45,17 @@ export default function ConversationItem({ conversation }) {
               {conversation.name}
             </h3>
             <span className="text-xs text-dark-text-muted flex-shrink-0">
-              {getTimeAgo(conversation.timestamp)}
+              {/* {getTimeAgo(conversation.updatedAt)} */}
             </span>
           </div>
 
           <p className="text-xs text-dark-text-muted truncate">
-            {conversation.lastMessage}
+            {conversation?.lastMessage?.content || 'No messages yet'}
           </p>
         </div>
 
         {/* Unread Badge */}
-        {conversation.unread > 0 && (
+        {/* {conversation.unread > 0 && (
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -63,11 +63,11 @@ export default function ConversationItem({ conversation }) {
           >
             {conversation.unread}
           </motion.div>
-        )}
+        )} */}
       </div>
 
       {/* Hover Actions */}
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0, x: -10 }}
         animate={showActions || isActive ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
         transition={{ duration: 0.15 }}
@@ -80,7 +80,7 @@ export default function ConversationItem({ conversation }) {
           whileTap={{ scale: 0.95 }}
           onClick={(e) => {
             e.stopPropagation();
-            dispatch(togglePinned(conversation.id));
+            dispatch(togglePinned(conversation._id));
           }}
           className={`p-1.5 rounded transition-colors ${
             conversation.isPinned
@@ -114,7 +114,7 @@ export default function ConversationItem({ conversation }) {
         >
           <MoreVertical size={14} />
         </motion.button>
-      </motion.div>
+      </motion.div> */}
     </motion.div>
   );
 }

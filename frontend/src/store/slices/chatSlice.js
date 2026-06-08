@@ -1,12 +1,15 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { mockConversations, mockMessages } from '../../mock/data.js';
+import { fetchConversation } from '../actions/conversation.actions.js';
+import { fetchMessages } from '../actions/message.actions.js';
 
 const chatSlice = createSlice({
   name: 'chat',
   initialState: {
-    conversations: mockConversations,
-    messages: mockMessages,
-    currentConversationId: 'conv-1',
+    conversations: [],
+    messages: {},
+    messagesLoading: false,
+    currentConversationId: null,
     loading: false,
     error: null,
   },
@@ -29,7 +32,7 @@ const chatSlice = createSlice({
         conversation.unread = 0;
       }
     },
-    markAsRead: (state, action) => {
+    markConversationAsRead: (state, action) => {
       const conversation = state.conversations.find(c => c.id === action.payload);
       if (conversation) {
         conversation.unread = 0;
@@ -60,12 +63,36 @@ const chatSlice = createSlice({
       }
     },
   },
+  extraReducers:(builder)=>{
+    builder.addCase(fetchConversation.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(fetchConversation.fulfilled, (state, action) => {
+      state.loading = false;
+      state.conversations = action.payload;
+    });
+    builder.addCase(fetchConversation.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    });
+    builder.addCase(fetchMessages.pending, (state) => {
+      state.messagesLoading = true;
+    });
+    builder.addCase(fetchMessages.fulfilled, (state, action) => {
+      state.messagesLoading = false;
+      state.messages = action.payload;
+    });
+    builder.addCase(fetchMessages.rejected, (state, action) => {
+      state.messagesLoading = false;
+      state.error = action.payload;
+    });
+  }
 });
 
 export const { 
   setCurrentConversation, 
   addMessage, 
-  markAsRead, 
+  markConversationAsRead, 
   togglePinned, 
   toggleFavorite,
   addReaction,

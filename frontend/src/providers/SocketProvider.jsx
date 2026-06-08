@@ -1,48 +1,106 @@
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { setConnected } from "../store/slices/socketSlice";
-import socketService from "../services/socket.service";
+import { useEffect } from 'react';
 
-export default function SocketProvider({
-  children,
-}) {
+import { useDispatch, useSelector } from 'react-redux';
+
+import { addOnlineUsers, removeOnlineUser, setConnected } from '../store/slices/socketSlice';
+
+import socketService from '../services/socket.service';
+
+
+
+export default function SocketProvider({ children }) {
+
   const dispatch = useDispatch();
 
-  const { isAuthenticated } = useSelector(
-    (state) => state.auth
-  );
-  console.log('isAuthenticated',isAuthenticated)
+
+
+  const { isAuthenticated } = useSelector((state) => state.auth);
+
+  console.log('isAuthenticated', isAuthenticated);
+
+
 
   useEffect(() => {
+
     if (!isAuthenticated) return;
 
+
+
     const socket = socketService.connect();
-    console.log('socket',socket)
-    
+
+    console.log('socket', socket);
+
+
+
     if (!socket) {
+
       console.error('Failed to initialize socket connection');
+
       return;
+
     }
 
-    socket.on("connect", () => {
+
+
+    socket.on('connect', () => {
+
       console.log('Socket connected successfully');
+
       dispatch(setConnected(true));
+
     });
 
-    socket.on("disconnect", () => {
+
+
+    socket.on('disconnect', () => {
+
       console.log('Socket disconnected');
+
       dispatch(setConnected(false));
+
     });
 
-    socket.on("connect_error", (error) => {
-      console.error('Socket connection error:', error);
-      dispatch(setConnected(false));
+
+
+    socket.on('user_online', (user) => {
+
+      console.log('user came online', user);
+
+      dispatch(addOnlineUsers(user));
+
     });
+
+    socket.on('user_offline', (user) => {
+
+      console.log('user went offline', user);
+
+      dispatch(removeOnlineUser({ userId: user._id }));
+
+    });
+
+
+
+    socket.on('connect_error', (error) => {
+
+      console.error('Socket connection error:', error);
+
+      dispatch(setConnected(false));
+
+    });
+
+
 
     return () => {
+
       socketService.disconnect();
+
     };
+
   }, [isAuthenticated]);
 
+
+
   return children;
+
 }
+

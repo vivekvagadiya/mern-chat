@@ -13,8 +13,16 @@ const socketSlice = createSlice({
     setOnlineUsers(state, action) {
       state.onlineUsers = action.payload;
     },
+    addOnlineUsers(state, action) {
+      state.onlineUsers.push(action.payload);
+    },
+    removeOnlineUser(state, action) {
+      state.onlineUsers = state.onlineUsers.filter((user) => user.id != action.payload.userId);
+    },
+
   },
 });
 
-export const { setConnected, setOnlineUsers } = socketSlice.actions;
+export const { setConnected, setOnlineUsers, addOnlineUsers, removeOnlineUser } =
+  socketSlice.actions;
 export default socketSlice.reducer;

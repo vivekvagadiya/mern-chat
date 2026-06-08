@@ -14,11 +14,13 @@ import {
 import ConversationItem from '../../components/chat/ConversationItem';
 import { setCurrentConversation } from '../../store/slices/chatSlice';
 import { setNotificationsOpen, setSettingsOpen, setSidebarOpen, toggleSearch } from '../../store/slices/uiSlice';
+import { useConversation } from '../../hooks/useConversation';
 
 export default function Sidebar() {
   const dispatch = useDispatch();
   const [filter, setFilter] = useState('all'); // all, pinned, favorites
-  const { conversations } = useSelector(state => state.chat);
+  const { conversations,messages } = useConversation();
+  console.log('conversations',conversations,messages)
   const { mobileView } = useSelector(state => state.ui);
 
   const pinnedConversations = conversations.filter(c => c.isPinned);
@@ -112,13 +114,13 @@ export default function Sidebar() {
             {displayConversations.length > 0 ? (
               displayConversations.map((conversation, index) => (
                 <motion.div
-                  key={conversation.id}
+                  key={conversation._id}
                   layout
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ delay: index * 0.05 }}
-                  onClick={() => handleConversationClick(conversation.id)}
+                  onClick={() => handleConversationClick(conversation._id)}
                 >
                   <ConversationItem conversation={conversation} />
                 </motion.div>
