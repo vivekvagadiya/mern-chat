@@ -4,10 +4,12 @@ import { motion } from 'framer-motion';
 import { Pin, Star, MoreVertical } from 'lucide-react';
 import { getTimeAgo } from '../../mock/data.js';
 import { toggleFavorite } from '../../store/slices/chatSlice.js';
+import { formatChatDate } from '../../utils/helper.js';
+import Avatar from '../common/Avatar.jsx';
 
 export default function ConversationItem({ conversation }) {
   const dispatch = useDispatch();
-  const currentConversationId = useSelector(state => state.chat.currentConversationId);
+  const currentConversationId = useSelector((state) => state.chat.currentConversationId);
   const isActive = conversation._id === currentConversationId;
   const [showActions, setShowActions] = React.useState(false);
 
@@ -30,22 +32,28 @@ export default function ConversationItem({ conversation }) {
       <div className="p-3 flex items-start gap-3">
         {/* Avatar & Status */}
         <div className="relative flex-shrink-0">
-          {/* <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg">
-            {conversation.avatar}
-          </div> */}
+          <Avatar
+            src={conversation.type === 'direct' ? conversation.avatar : conversation.groupAvatar}
+            alt={conversation.displayName}
+            fallback={conversation.type === 'group' ? '👥' : '👤'}
+          />
           {conversation.type === 'direct' && conversation.isActive && (
-            <div className={`absolute bottom-0 right-0 w-3 h-3 ${getStatusIndicator(conversation.isActive)} rounded-full border border-dark-surface`} />
+            <div
+              className={`absolute bottom-0 right-0 w-3 h-3 ${getStatusIndicator(conversation.isActive)} rounded-full border border-dark-surface`}
+            />
           )}
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline justify-between gap-2 mb-0.5">
-            <h3 className={`font-medium text-sm truncate ${isActive ? 'text-primary' : 'text-dark-text'}`}>
+            <h3
+              className={`font-medium text-sm truncate ${isActive ? 'text-primary' : 'text-dark-text'}`}
+            >
               {conversation.name}
             </h3>
             <span className="text-xs text-dark-text-muted flex-shrink-0">
-              {/* {getTimeAgo(conversation.updatedAt)} */}
+              {formatChatDate(conversation.updatedAt)}
             </span>
           </div>
 

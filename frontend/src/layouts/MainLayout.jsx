@@ -71,7 +71,7 @@ console.log('connected',connected);
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* <ChatArea /> */}
+        <ChatArea />
       </div>
 
       {/* Modals & Panels */}

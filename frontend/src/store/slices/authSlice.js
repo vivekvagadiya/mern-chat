@@ -41,7 +41,7 @@ const authSlice = createSlice({
       })
       .addCase(fetchUserProfile.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload?.data;
+        state.user = action.payload?.data?.user;
         state.isAuthenticated = true;
         state.isInitialized = true;
       })

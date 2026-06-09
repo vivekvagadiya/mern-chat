@@ -1,40 +1,32 @@
 import React, { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Phone,
-  Video,
-  Info,
-  Clock,
-  Menu,
-  Check,
-  CheckCheck,
-} from 'lucide-react';
+import { Phone, Video, Info, Clock, Menu, Check, CheckCheck } from 'lucide-react';
 import { getTimeAgo } from '../../mock/data.js';
 import MessageBubble from '../chat/MessageBubble';
 import MessageComposer from '../chat/MessageComposer';
 import { setSidebarOpen } from '../../store/slices/uiSlice.js';
 import { markConversationAsRead } from '../../store/slices/chatSlice.js';
+import { useConversation } from '../../hooks/useConversation.js';
+import { formatChatDate, getTimeStamp } from '../../utils/helper.js';
 
 export default function ChatArea() {
   const dispatch = useDispatch();
   const messagesEndRef = useRef(null);
-  const { conversations, messages, currentConversationId } = useSelector(state => state.chat);
-  const { mobileView } = useSelector(state => state.ui);
-
-  const currentConversation = conversations.find(c => c._id === currentConversationId);
-  const currentMessages = messages[currentConversationId] || [];
+  const { mobileView } = useSelector((state) => state.ui);
+  const { messages, currentConversation, pagination } = useConversation();
+  console.log('messages', messages);
 
   useEffect(() => {
-    if (currentConversationId) {
-      dispatch(markConversationAsRead(currentConversationId));
+    if (currentConversation) {
+      dispatch(markConversationAsRead(currentConversation._id));
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [currentConversationId, dispatch, currentMessages.length]);
+  }, [currentConversation, dispatch, messages.length]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [currentMessages.length]);
+  }, [messages.length]);
 
   if (!currentConversation) {
     return (
@@ -50,7 +42,8 @@ export default function ChatArea() {
     );
   }
 
-  const conversationMemberCount = currentConversation.type === 'group' ? currentConversation.memberCount : 1;
+  const conversationMemberCount =
+    currentConversation.type === 'group' ? currentConversation.memberCount : 1;
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-dark-surface via-dark-bg to-dark-surface-alt overflow-hidden">
@@ -72,15 +65,13 @@ export default function ChatArea() {
             </div>
 
             <div>
-              <h2 className="font-semibold text-dark-text">
-                {currentConversation.name}
-              </h2>
+              <h2 className="font-semibold text-dark-text">{currentConversation.name}</h2>
               <p className="text-xs text-dark-text-muted">
                 {currentConversation.type === 'group'
                   ? `${conversationMemberCount} members`
                   : currentConversation.status === 'online'
-                  ? 'Active now'
-                  : `Last seen ${getTimeAgo(currentConversation.timestamp)}`}
+                    ? 'Active now'
+                    : `Last seen ${new Date(currentConversation.createdAt).toLocaleTimeString()}`}
               </p>
             </div>
           </div>
@@ -115,7 +106,7 @@ export default function ChatArea() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scroll-smooth">
         <AnimatePresence>
-          {currentMessages.length === 0 ? (
+          {messages.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -130,10 +121,10 @@ export default function ChatArea() {
               </div>
             </motion.div>
           ) : (
-            currentMessages.map((message, index) => {
-              const showTimestamp = index === 0 || 
-                new Date(currentMessages[index - 1].timestamp).toLocaleDateString() !==
-                new Date(message.timestamp).toLocaleDateString();
+            messages.map((message, index) => {
+              const showTimestamp =
+                index === 0 ||
+                getTimeStamp(messages[index - 1].createdAt) !== getTimeStamp(message.createdAt);
 
               return (
                 <motion.div
@@ -146,10 +137,7 @@ export default function ChatArea() {
                   {showTimestamp && (
                     <div className="flex items-center justify-center my-4">
                       <div className="text-xs text-dark-text-muted bg-dark-surface-alt px-3 py-1 rounded-full">
-                        {new Date(message.timestamp).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })}
+                        {getTimeStamp(message.createdAt)}
                       </div>
                     </div>
                   )}
@@ -164,7 +152,7 @@ export default function ChatArea() {
 
       {/* Message Composer */}
       <div className="p-4 border-t border-dark-border backdrop-blur-md bg-dark-surface/50">
-        <MessageComposer conversationId={currentConversationId} />
+        <MessageComposer conversationId={currentConversation?._id} />
       </div>
     </div>
   );

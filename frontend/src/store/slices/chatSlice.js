@@ -8,6 +8,8 @@ const chatSlice = createSlice({
   initialState: {
     conversations: [],
     messages: {},
+    chatInfo: {},
+    pagination: {},
     messagesLoading: false,
     currentConversationId: null,
     loading: false,
@@ -80,7 +82,13 @@ const chatSlice = createSlice({
     });
     builder.addCase(fetchMessages.fulfilled, (state, action) => {
       state.messagesLoading = false;
-      state.messages = action.payload;
+      const { chatId, messages, chatInfo, pagination } = action.payload;
+      // Store messages by chatId
+      state.messages[chatId] = messages;
+      // Store chat info by chatId
+      state.chatInfo[chatId] = chatInfo;
+      // Store pagination info by chatId
+      state.pagination[chatId] = pagination;
     });
     builder.addCase(fetchMessages.rejected, (state, action) => {
       state.messagesLoading = false;

@@ -5,11 +5,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addOnlineUsers, removeOnlineUser, setConnected } from '../store/slices/socketSlice';
 
 import socketService from '../services/socket.service';
+import { addMessage } from '../store/slices/chatSlice';
 
 export default function SocketProvider({ children }) {
   const dispatch = useDispatch();
 
   const { isAuthenticated } = useSelector((state) => state.auth);
+  const {currentConversationId}=useSelector((state)=>state.chat)
 
   console.log('isAuthenticated', isAuthenticated);
 
@@ -55,6 +57,12 @@ export default function SocketProvider({ children }) {
 
       dispatch(setConnected(false));
     });
+
+    socket.on('new_mesasge',(data)=>{
+      if(data.conversationId===currentConversationId){
+        dispatch(addMessage(data));
+      }
+    })
 
     return () => {
       socketService.disconnect();

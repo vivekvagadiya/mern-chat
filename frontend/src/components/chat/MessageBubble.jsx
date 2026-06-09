@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, Reply, Edit, Trash2, Smile, Check, CheckCheck } from 'lucide-react';
-import { getTimeAgo } from '../../mock/data.js';
 import { addReaction } from '../../store/slices/chatSlice.js';
+import { formatChatDate } from '../../utils/helper.js';
+import Avatar from '../common/Avatar.jsx';
 
 const EMOJI_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🎉', '🚀', '✨'];
 
@@ -11,14 +12,18 @@ export default function MessageBubble({ message }) {
   const dispatch = useDispatch();
   const [showActions, setShowActions] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
-  const isOwn = message.userId === 'current';
+  const { user } = useSelector((state) => state.auth);
+  const isOwn = message.senderId._id === user.id;
+  console.log('user', user, message);
 
   const handleAddReaction = (emoji) => {
-    dispatch(addReaction({
-      conversationId: 'conv-1', // TODO: pass as prop
-      messageId: message.id,
-      emoji,
-    }));
+    dispatch(
+      addReaction({
+        conversationId: 'conv-1', // TODO: pass as prop
+        messageId: message.id,
+        emoji,
+      })
+    );
     setShowReactions(false);
   };
 
@@ -41,16 +46,22 @@ export default function MessageBubble({ message }) {
     >
       {/* Avatar */}
       {!isOwn && (
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0 text-sm">
-          {message.avatar}
-        </div>
+        // <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0 text-sm">
+        //   {message?.senderId?.avatar}
+        // </div>
+        <Avatar
+          size="w-8 h-8"
+          src={message?.senderId?.avatar}
+          alt={message?.senderId?.username}
+          fallback={message?.senderId?.username?.charAt(0)}
+        />
       )}
 
       <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} gap-1.5`}>
         {/* User name for group messages */}
         {!isOwn && (
           <span className="text-xs font-medium text-dark-text-muted px-3 pt-1">
-            {message.userName}
+            {message?.senderId?.username}
           </span>
         )}
 
@@ -64,15 +75,15 @@ export default function MessageBubble({ message }) {
             }`}
             whileHover={{ y: -2 }}
           >
-            <p className="text-sm leading-relaxed break-words max-w-xs">
-              {message.content}
-            </p>
+            <p className="text-sm leading-relaxed break-words max-w-xs">{message.content}</p>
 
             {/* Timestamp & Status */}
-            <div className={`flex items-center gap-1.5 mt-1 text-xs ${
-              isOwn ? 'text-white/70' : 'text-dark-text-muted'
-            }`}>
-              <span>{getTimeAgo(message.timestamp)}</span>
+            <div
+              className={`flex items-center gap-1.5 mt-1 text-xs ${
+                isOwn ? 'text-white/70' : 'text-dark-text-muted'
+              }`}
+            >
+              <span>{formatChatDate(message.createdAt)}</span>
               {isOwn && getStatusIcon()}
             </div>
           </motion.div>
@@ -166,20 +177,20 @@ export default function MessageBubble({ message }) {
         </div>
 
         {/* Reactions Display */}
-        {message.reactions.length > 0 && (
+        {message?.reactions?.length > 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="flex flex-wrap gap-1 mt-1"
           >
-            {message.reactions.map((reaction) => (
+            {message?.reactions?.map((reaction) => (
               <motion.div
-                key={reaction.emoji}
+                key={reaction?.emoji}
                 whileHover={{ scale: 1.1 }}
                 className="flex items-center gap-1 bg-dark-surface-alt border border-glass-light rounded-full px-2.5 py-1 cursor-pointer hover:bg-dark-surface-2 transition-colors"
               >
-                <span className="text-sm">{reaction.emoji}</span>
-                <span className="text-xs text-dark-text-muted">{reaction.users}</span>
+                <span className="text-sm">{reaction?.emoji}</span>
+                <span className="text-xs text-dark-text-muted">{reaction?.users}</span>
               </motion.div>
             ))}
           </motion.div>
