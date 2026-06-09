@@ -46,7 +46,7 @@ const createDirectChat = async (userId, participantId) => {
 };
 
 const getUserChats = async (userId) => {
-  return Chat.find({
+  const chats = await Chat.find({
     participants: userId,
     isActive: true,
   })
@@ -54,13 +54,49 @@ const getUserChats = async (userId) => {
     .populate("participants", "username avatar")
     .populate({
       path: "lastMessage",
+      select: "content senderId createdAt",
       populate: {
         path: "senderId",
         select: "username avatar",
       },
     })
     .sort({ updatedAt: -1 })
-    .lean(); // Return plain JavaScript objects for better performance
+    .lean(); // Return plain JS objects
+
+  return chats.map((chat) => {
+    const processedChat = { ...chat };
+
+    // 1-1 chat handling
+    if (
+      chat.type === "direct" &&
+      chat.participants &&
+      chat.participants.length === 2
+    ) {
+      const otherParticipant = chat.participants.find(
+        (p) => p._id.toString() !== userId
+      );
+
+      if (otherParticipant) {
+        processedChat.avatar = otherParticipant.avatar;
+        processedChat.name = otherParticipant.username;
+      }
+    } 
+    // group chat handling
+    else if (chat.type === "group") {
+      // processedChat.displayName = chat.name;
+    }
+
+    // last message formatting
+    if (chat.lastMessage) {
+      processedChat.lastMessagePreview = {
+        content: chat.lastMessage.content,
+        senderName: chat.lastMessage.senderId?.username || "Unknown",
+        timestamp: chat.lastMessage.createdAt,
+      };
+    }
+
+    return processedChat;
+  });
 };
 
 const getChatById = async (chatId, userId = null) => {

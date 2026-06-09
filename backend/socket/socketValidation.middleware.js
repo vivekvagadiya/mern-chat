@@ -10,42 +10,44 @@ const {
  * Validates incoming socket event data using Zod schemas
  */
 const validateSocketEvent = (schema) => {
-  return (socket, next) => {
-    return async (data, callback) => {
-      try {
-        const validatedData = schema.parse(data);
-        // Proceed with validated data
-        return next(validatedData, callback);
-      } catch (error) {
-        if (error.name === 'ZodError') {
-          socket.emit("validation_error", { 
-            message: "Validation failed", 
-            errors: error.issues.map(err => ({
-              field: err.path.join('.'),
-              message: err.message
-            }))
-          });
-        } else {
-          socket.emit("error", { message: error.message });
+  return (socket) => {
+    return (handler) => {
+      return async (data, callback) => {
+        try {
+          const validatedData = schema.parse(data);
+          // Proceed with validated data
+          return await handler(validatedData, callback);
+        } catch (error) {
+          if (error.name === 'ZodError') {
+            socket.emit("validation_error", { 
+              message: "Validation failed", 
+              errors: error.issues.map(err => ({
+                field: err.path.join('.'),
+                message: err.message
+              }))
+            });
+          } else {
+            socket.emit("error", { message: error.message });
+          }
         }
-      }
+      };
     };
   };
 };
 
 /**
- * Pre-configured validation middleware for different events
+ * Factory function to create validators for a specific socket
  */
-const socketValidators = {
-  joinChat: validateSocketEvent(joinChatSchema),
-  leaveChat: validateSocketEvent(joinChatSchema),
-  newMessage: validateSocketEvent(newMessageSchema),
-  markRead: validateSocketEvent(markReadSchema),
-  typingStart: validateSocketEvent(typingSchema),
-  typingStop: validateSocketEvent(typingSchema),
-};
+const createSocketValidators = (socket) => ({
+  joinChat: validateSocketEvent(joinChatSchema)(socket),
+  leaveChat: validateSocketEvent(joinChatSchema)(socket),
+  newMessage: validateSocketEvent(newMessageSchema)(socket),
+  markRead: validateSocketEvent(markReadSchema)(socket),
+  typingStart: validateSocketEvent(typingSchema)(socket),
+  typingStop: validateSocketEvent(typingSchema)(socket),
+});
 
 module.exports = { 
   validateSocketEvent, 
-  socketValidators 
+  createSocketValidators 
 };

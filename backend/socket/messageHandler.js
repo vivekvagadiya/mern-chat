@@ -1,10 +1,13 @@
 const messageService = require("../services/message.service");
 const { broadcastToChat, joinChatRoom, leaveChatRoom } = require("./roomManager");
-const { socketValidators } = require("./socketValidation.middleware");
+const { createSocketValidators } = require("./socketValidation.middleware");
 
 const handleMessageHandlers = (io, socket) => {
+  // Create validators for this specific socket
+  const validators = createSocketValidators(socket);
+  
   // Join chat room
-  socket.on("join_chat", socketValidators.joinChat(async (validatedData) => {
+  socket.on("join_chat", validators.joinChat(async (validatedData) => {
     const { chatId } = validatedData;
     
     // Validate user is participant
@@ -22,7 +25,7 @@ const handleMessageHandlers = (io, socket) => {
   }));
 
   // Leave chat room
-  socket.on("leave_chat", socketValidators.leaveChat((validatedData) => {
+  socket.on("leave_chat", validators.leaveChat((validatedData) => {
     const { chatId } = validatedData;
     
     leaveChatRoom(socket, chatId);
@@ -33,7 +36,7 @@ const handleMessageHandlers = (io, socket) => {
   }));
 
   // Send new message
-  socket.on("new_message", socketValidators.newMessage(async (validatedData) => {
+  socket.on("new_message", validators.newMessage(async (validatedData) => {
     const { chatId, content, type, mediaUrl } = validatedData;
     
     const message = await messageService.sendMessage(chatId, socket.userId, {
@@ -53,7 +56,7 @@ const handleMessageHandlers = (io, socket) => {
   }));
 
   // Mark message as read
-  socket.on("mark_read", socketValidators.markRead(async (validatedData) => {
+  socket.on("mark_read", validators.markRead(async (validatedData) => {
     const { messageId } = validatedData;
     
     await messageService.markAsRead(messageId, socket.userId);
@@ -67,7 +70,7 @@ const handleMessageHandlers = (io, socket) => {
   }));
 
   // Typing indicators
-  socket.on("typing_start", socketValidators.typingStart((validatedData) => {
+  socket.on("typing_start", validators.typingStart((validatedData) => {
     const { chatId } = validatedData;
     
     socket.to(chatId).emit("user_typing", {
@@ -76,7 +79,7 @@ const handleMessageHandlers = (io, socket) => {
     });
   }));
 
-  socket.on("typing_stop", socketValidators.typingStop((validatedData) => {
+  socket.on("typing_stop", validators.typingStop((validatedData) => {
     const { chatId } = validatedData;
     
     socket.to(chatId).emit("user_stopped_typing", {
