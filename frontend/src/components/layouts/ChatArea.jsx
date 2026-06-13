@@ -128,7 +128,7 @@ export default function ChatArea() {
 
               return (
                 <motion.div
-                  key={message.id}
+                  key={message._id || message.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}

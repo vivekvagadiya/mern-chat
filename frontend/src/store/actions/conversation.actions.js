@@ -6,7 +6,6 @@ export const fetchConversation = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await getConversation();
-      console.log('response',response)
       return response;
     } catch (error) {
       return rejectWithValue(error.message || "Failed to fetch conversation");

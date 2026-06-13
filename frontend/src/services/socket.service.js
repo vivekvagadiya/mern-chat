@@ -40,24 +40,31 @@ class SocketService {
   }
   joinRoom(roomId) {
     if (this.socket) {
-      this.socket?.emit('join_chat', roomId);
+      this.socket?.emit('join_chat', { chatId: roomId });
     }
   }
   leaveRoom(roomId) {
     if (this.socket) {
-      this.socket?.emit('leave_chat', roomId);
+      this.socket?.emit('leave_chat', { chatId: roomId });
     }
   }
   sendMessage(payload) {
-    if (this.socket) {
-      this.socket?.emit('new_message', payload);
+    if (this.socket && this.socket.connected) {
+      console.log('sending message', payload);
+      this.socket.emit('new_message', payload);
+    } else {
+      console.error('Socket not connected, cannot send message');
     }
   }
   on(event, callback) {
-    this.socket.on(event, callback);
+    if (this.socket) {
+      this.socket.on(event, callback);
+    }
   }
   off(event, callback) {
-    this.socket.off(event, callback);
+    if (this.socket) {
+      this.socket.off(event, callback);
+    }
   }
   getSocket() {
     return this.socket;

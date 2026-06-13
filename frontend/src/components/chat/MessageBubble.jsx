@@ -13,14 +13,13 @@ export default function MessageBubble({ message }) {
   const [showActions, setShowActions] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const { user } = useSelector((state) => state.auth);
-  const isOwn = message.senderId._id === user.id;
-  console.log('user', user, message);
+  const isOwn = (message?.senderId?._id || message?.senderId) === (user?._id || user?.id);
 
   const handleAddReaction = (emoji) => {
     dispatch(
       addReaction({
         conversationId: 'conv-1', // TODO: pass as prop
-        messageId: message.id,
+        messageId: message._id || message.id,
         emoji,
       })
     );

@@ -104,9 +104,6 @@ const RegisterPage = () => {
     setIsLoading(true);
     try {
       // TODO: Integrate API call here
-      console.log('Register data:', formData);
-      
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // TODO: Handle successful registration

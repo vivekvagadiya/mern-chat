@@ -1,15 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Send,
-  Paperclip,
-  Smile,
-  Mic,
-  Plus,
-  X,
-} from 'lucide-react';
+import { Send, Paperclip, Smile, Mic, Plus, X } from 'lucide-react';
 import { addMessage } from '../../store/slices/chatSlice.js';
+import { sendMessageAction } from '../../store/actions/message.actions.js';
+import socketService from '../../services/socket.service.js';
 
 export default function MessageComposer({ conversationId }) {
   const dispatch = useDispatch();
@@ -19,7 +14,10 @@ export default function MessageComposer({ conversationId }) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const { user } = useSelector((state) => state.auth);
 
+  const socket = socketService.getSocket();
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
@@ -29,28 +27,66 @@ export default function MessageComposer({ conversationId }) {
     }
   }, [message]);
 
-  const handleSendMessage = () => {
-    if (message.trim() || attachments.length > 0) {
-      const newMessage = {
-        id: `msg-${Date.now()}`,
-        userId: 'current',
-        userName: 'You',
-        avatar: '👤',
-        content: message,
-        timestamp: new Date(),
-        status: 'sent',
-        reactions: [],
-        attachments: attachments,
+  // useEffect(() => {
+  //   if (socket) {
+  //     socket.on('message_received', (message) => {
+  //       console.log('message received', message);
+  //     });
+  //   }
+
+  //   return () => {
+  //     if (socket) {
+  //       socket.off('message_received');
+  //     }
+  //   };
+  // }, [socket]);
+
+  useEffect(() => {
+    if (message.trim()) {
+      socketService.getSocket()?.emit('typing_start', { chatId: conversationId });
+
+      const timeout = setTimeout(() => {
+        socketService.getSocket()?.emit('typing_stop', { chatId: conversationId });
+      }, 1000);
+
+      return () => {
+        clearTimeout(timeout);
       };
+    }
+  }, [message, conversationId]);
 
-      dispatch(addMessage({
-        conversationId,
-        message: newMessage,
-      }));
+  const handleSendMessage = async () => {
+    if (message.trim()) {
+      setIsSending(true);
 
-      setMessage('');
-      setAttachments([]);
-      setIsTyping(false);
+      try {
+        const result = await dispatch(
+          sendMessageAction({
+            chatId: conversationId, // Use chatId to match backend
+            content: message.trim(),
+            type: 'text',
+            mediaUrl: null,
+          })
+        ).unwrap();
+
+        // Update with actual server message
+        dispatch(
+          addMessage({
+            conversationId,
+            message: result,
+          })
+        );
+
+        // No need to emit socket event here, backend controller handles broadcasting now
+
+        setMessage('');
+        setAttachments([]);
+        setIsTyping(false);
+      } catch (error) {
+        console.error('Failed to send message:', error);
+      } finally {
+        setIsSending(false);
+      }
     }
   };
 
@@ -69,7 +105,7 @@ export default function MessageComposer({ conversationId }) {
   };
 
   const removeAttachment = (id) => {
-    setAttachments(attachments.filter(a => a.id !== id));
+    setAttachments(attachments.filter((a) => a.id !== id));
   };
 
   const EMOJIS = ['😀', '😂', '😍', '🔥', '✨', '👍', '🎉', '🚀', '💯', '😎', '🙌', '❤️'];
