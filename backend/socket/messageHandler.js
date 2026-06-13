@@ -35,25 +35,25 @@ const handleMessageHandlers = (io, socket) => {
     });
   }));
 
-  // Send new message
-  socket.on("new_message", validators.newMessage(async (validatedData) => {
-    const { chatId, content, type, mediaUrl } = validatedData;
-    
-    const message = await messageService.sendMessage(chatId, socket.userId, {
-      content,
-      type,
-      mediaUrl,
-    });
-
-    // Broadcast to all users in the chat
-    broadcastToChat(io, chatId, "message_received", message);
-    
-    // Update chat's last message for all participants
-    io.to(chatId).emit("chat_updated", {
-      chatId,
-      lastMessage: message,
-    });
-  }));
+  // Send new message - Handled via REST API to avoid duplication
+  // socket.on("new_message", validators.newMessage(async (validatedData) => {
+  //   const { chatId, content, type, mediaUrl } = validatedData;
+  //   console.log('message received',validatedData)
+  //   const message = await messageService.sendMessage(chatId, socket.userId, {
+  //     content,
+  //     type,
+  //     mediaUrl,
+  //   });
+  // 
+  //   // Broadcast to all users in the chat
+  //   broadcastToChat(io, chatId, "message_received", message);
+  //   
+  //   // Update chat's last message for all participants
+  //   io.to(chatId).emit("chat_updated", {
+  //     chatId,
+  //     lastMessage: message,
+  //   });
+  // }));
 
   // Mark message as read
   socket.on("mark_read", validators.markRead(async (validatedData) => {

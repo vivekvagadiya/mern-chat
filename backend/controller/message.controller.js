@@ -10,6 +10,17 @@ const sendMessageController = async (req, res) => {
       type,
       mediaUrl,
     });
+
+    // Broadcast message via socket
+    const io = req.app.get("io");
+    if (io) {
+      io.to(chatId).emit("message_received", message);
+      io.to(chatId).emit("chat_updated", {
+        chatId,
+        lastMessage: message,
+      });
+    }
+
     return apiResponse.success(res, "Message sent successfully", message);
   } catch (error) {
     return apiResponse.error(res, error.message, 400);

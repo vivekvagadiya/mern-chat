@@ -25,7 +25,7 @@ const sendMessageSchema = z.object({
         .optional()
         .default("text"),
 
-      mediaUrl: z.string().url("Invalid media URL").optional(),
+      mediaUrl: z.string().url("Invalid media URL").optional().nullable(),
     })
     .refine(
       (data) => {
