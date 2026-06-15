@@ -18,6 +18,8 @@ export default function Sidebar() {
   const { conversations, loading, messages ,selectConversation} = useConversation();
   console.log('conversations', conversations, messages);
   const { mobileView } = useSelector((state) => state.ui);
+  const {onlineUsers}=useSelector((state)=>state.socket);
+  console.log('onlineUsers',onlineUsers)
 
   const pinnedConversations = conversations.filter((c) => c.isPinned);
   const favoriteConversations = conversations.filter((c) => c.isFavorite);

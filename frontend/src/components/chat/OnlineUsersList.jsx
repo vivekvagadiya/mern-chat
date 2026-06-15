@@ -99,12 +99,9 @@ export default function OnlineUsersList({ showTitle = true, maxVisible = 10 }) {
 export function CompactOnlineUsersList() {
   const { onlineUsers, userStatuses, connected } = useSelector((state) => state.socket);
   const { user: currentUser } = useSelector((state) => state.auth);
+  console.log('user',currentUser,onlineUsers)
 
-  const otherOnlineUsers = onlineUsers.filter(user => 
-    (user._id !== currentUser?._id && user.id !== currentUser?.id)
-  );
-
-  if (!connected || otherOnlineUsers.length === 0) {
+  if (!connected || onlineUsers.length === 0) {
     return null;
   }
 
@@ -113,12 +110,12 @@ export function CompactOnlineUsersList() {
       <div className="flex items-center gap-2 mb-2">
         <Circle size={8} className="text-success fill-current" />
         <span className="text-xs text-dark-text-muted">
-          {otherOnlineUsers.length} online
+          {onlineUsers.length} online
         </span>
       </div>
       
       <div className="flex -space-x-2">
-        {otherOnlineUsers.slice(0, 5).map((user) => {
+        {onlineUsers.slice(0, 5).map((user) => {
           const userId = user._id || user.id;
           const userStatus = getUserStatus(userId, userStatuses);
           const statusClass = getStatusIndicatorClass(userStatus);
@@ -127,9 +124,9 @@ export function CompactOnlineUsersList() {
             <div key={userId} className="relative">
               <Avatar
                 src={user.avatar}
-                alt={user.name}
-                fallback="👤"
-                size="xs"
+                alt={user.username}
+                fallback={user.username?.charAt(0)}
+                size="w-8 h-8"
                 className="border-2 border-dark-surface"
               />
               <div
@@ -139,9 +136,9 @@ export function CompactOnlineUsersList() {
           );
         })}
         
-        {otherOnlineUsers.length > 5 && (
+        {onlineUsers.length > 5 && (
           <div className="flex items-center justify-center w-6 h-6 bg-dark-surface-alt border-2 border-dark-surface rounded-full text-xs text-dark-text-muted">
-            +{otherOnlineUsers.length - 5}
+            +{onlineUsers.length - 5}
           </div>
         )}
       </div>

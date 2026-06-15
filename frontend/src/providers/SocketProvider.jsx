@@ -99,13 +99,6 @@ export default function SocketProvider({ children }) {
           message: message
         }));
       
-      // Always update conversation list with new last message
-      console.log('🔔 Updating conversation list for chatId:', message.chatId);
-      dispatch(updateChat({
-        chatId: message.chatId,
-        lastMessage: message
-      }));
-      
       // Show notification if not in active conversation
       if (message.chatId !== currentConversationId) {
         // Show browser notification
