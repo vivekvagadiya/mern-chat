@@ -13,19 +13,29 @@ export default function ConversationItem({ conversation }) {
   const { onlineUsers, userStatuses } = useSelector((state) => state.socket);
   const isActive = conversation._id === currentConversationId;
   const [showActions, setShowActions] = React.useState(false);
-
+  
+  // Get current user ID to find the other participant in direct conversations
+  const { user: currentUser } = useSelector((state) => state.auth);
+  
+  // Find the other user in direct conversation (not the current user)
+  const getOtherParticipant = (conversation) => {
+    if (!conversation.participants || conversation.type !== 'direct') return null;
+    return conversation.participants.find(p => p._id !== currentUser?.id) || conversation.participants[0];
+  };
+  
+  const otherParticipant = getOtherParticipant(conversation);
+  
   // Get user online status for direct conversations
-  const isUserOnlineStatus = conversation.type === 'direct' && conversation.participants?.length > 0
-    ? isUserOnline(conversation.participants[0]._id, onlineUsers, userStatuses)
+  const isUserOnlineStatus = conversation.type === 'direct' && otherParticipant
+    ? isUserOnline(otherParticipant._id, onlineUsers, userStatuses)
     : false;
-
-  const userStatus = conversation.type === 'direct' && conversation.participants?.length > 0
-    ? getUserStatus(conversation.participants[0]._id, userStatuses)
+  const userStatus = conversation.type === 'direct' && otherParticipant
+    ? getUserStatus(otherParticipant._id, userStatuses)
     : 'offline';
-
   const getStatusIndicator = (status) => {
     return getStatusIndicatorClass(status);
   };
+  console.log('status indi',getStatusIndicator(userStatus),userStatus)
 
   return (
     <motion.div

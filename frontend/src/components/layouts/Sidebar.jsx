@@ -6,6 +6,7 @@ import ConversationItem from '../../components/chat/ConversationItem';
 import { CompactOnlineUsersList } from '../../components/chat/OnlineUsersList';
 import {
   setNotificationsOpen,
+  setSearchOpen,
   setSettingsOpen,
   setSidebarOpen,
   toggleSearch,
@@ -163,6 +164,7 @@ export default function Sidebar() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+          onClick={()=>dispatch(setSearchOpen(true))}
         >
           <Plus size={20} />
         </motion.button>

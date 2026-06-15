@@ -45,26 +45,12 @@ const chatSlice = createSlice({
     },
     updateChat:(state,action)=>{
       const {chatId,lastMessage}=action.payload;
-      console.log('🔧 updateChat called with:', { chatId, lastMessage });
-      console.log('🔧 Last message structure:', lastMessage ? {
-        _id: lastMessage._id,
-        content: lastMessage.content,
-        createdAt: lastMessage.createdAt,
-        sender: lastMessage.sender
-      } : 'null');
-      console.log('🔧 Available conversations:', state.conversations.map(c => ({ _id: c._id, name: c.name })));
-      
       const conversation=state.conversations.find((c)=>c._id===chatId || c.id===chatId )
       if(conversation){
         conversation.lastMessage=lastMessage;
         conversation.updatedAt=lastMessage?.createdAt || new Date().toISOString();
         conversation.unread=0;
-        console.log('✅ Updated conversation:', {
-          _id: conversation._id,
-          name: conversation.name,
-          lastMessage: conversation.lastMessage,
-          updatedAt: conversation.updatedAt
-        });
+        state.conversations.sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt));
       } else {
         console.log('❌ Conversation not found for chatId:', chatId);
       }

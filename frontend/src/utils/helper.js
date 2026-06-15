@@ -77,7 +77,7 @@ export const isUserOnline = (userId, onlineUsers, userStatuses) => {
 
 export const getUserStatus = (userId, userStatuses) => {
   const userStatus = userStatuses[userId];
-  return userStatus ? userStatus.status : 'offline';
+  return userStatus ? 'online' : 'offline';
 };
 
 export const getUserLastSeen = (userId, userStatuses) => {

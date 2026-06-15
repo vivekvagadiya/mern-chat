@@ -69,7 +69,7 @@ export default function SearchModal() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             transition={{ type: 'spring', bounce: 0.3 }}
-            className="fixed top-1/4 left-1/2 -translate-x-1/2 w-full max-w-2xl z-50"
+            className="fixed top-1/4 left-1/3 w-full max-w-2xl z-50"
           >
             <div className="mx-4 bg-dark-surface border border-dark-border rounded-2xl shadow-elevation-3 overflow-hidden">
               {/* Search Input */}
