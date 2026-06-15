@@ -1,6 +1,7 @@
 const messageService = require("../services/message.service");
 const apiResponse = require("../utils/apiResponse");
-
+const Chat = require("../models/chat.model");
+const socketManager=require('../socket/roomManager')
 const sendMessageController = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -11,9 +12,31 @@ const sendMessageController = async (req, res) => {
       mediaUrl,
     });
 
-    // Broadcast message via socket
+    // Broadcast message via socket to all participants
     const io = req.app.get("io");
     if (io) {
+      // Get chat participants to send to each user individually
+      const chat = await Chat.findById(chatId).populate("participants", "_id");
+
+      if (chat && chat.participants) {
+        // Send to each participant individually
+        chat.participants.forEach((participant) => {
+          const participantId = participant._id.toString();
+          const userSocketId = socketManager.getUserSocketId(
+            participantId,
+          );
+
+          if (userSocketId) {
+            io.to(userSocketId).emit("message_received", message);
+            io.to(userSocketId).emit("chat_updated", {
+              chatId,
+              lastMessage: message,
+            });
+          }
+        });
+      }
+
+      // Also broadcast to room for users who are actively viewing
       io.to(chatId).emit("message_received", message);
       io.to(chatId).emit("chat_updated", {
         chatId,
@@ -47,7 +70,7 @@ const markAsReadController = async (req, res) => {
   try {
     const userId = req.user.id;
     const { messageId } = req.params;
-    console.log('messageId',messageId)
+    console.log("messageId", messageId);
     const message = await messageService.markAsRead(messageId, userId);
     return apiResponse.success(
       res,
