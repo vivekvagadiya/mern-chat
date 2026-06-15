@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Paperclip, Smile, Mic, Plus, X } from 'lucide-react';
-import { addMessage } from '../../store/slices/chatSlice.js';
+import { addMessage, updateChat } from '../../store/slices/chatSlice.js';
 import { sendMessageAction } from '../../store/actions/message.actions.js';
 import socketService from '../../services/socket.service.js';
 
@@ -69,11 +69,25 @@ export default function MessageComposer({ conversationId }) {
           })
         ).unwrap();
 
+        console.log('📤 sendMessageAction result:', result);
+
         // Update with actual server message
         dispatch(
           addMessage({
             conversationId,
             message: result,
+          })
+        );
+
+        // Update conversation list with new last message
+        console.log('📤 Calling updateChat with:', {
+          chatId: conversationId,
+          lastMessage: result
+        });
+        dispatch(
+          updateChat({
+            chatId: conversationId,
+            lastMessage: result,
           })
         );
 

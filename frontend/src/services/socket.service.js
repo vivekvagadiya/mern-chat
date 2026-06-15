@@ -40,12 +40,18 @@ class SocketService {
   }
   joinRoom(roomId) {
     if (this.socket) {
+      console.log('🏠 Emitting join_chat for room:', roomId);
       this.socket?.emit('join_chat', { chatId: roomId });
+    } else {
+      console.log('❌ Cannot join room - socket not connected');
     }
   }
   leaveRoom(roomId) {
     if (this.socket) {
+      console.log('🏠 Emitting leave_chat for room:', roomId);
       this.socket?.emit('leave_chat', { chatId: roomId });
+    } else {
+      console.log('❌ Cannot leave room - socket not connected');
     }
   }
   sendMessage(payload) {

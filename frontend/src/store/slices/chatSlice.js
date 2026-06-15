@@ -1,5 +1,4 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { mockConversations, mockMessages } from '../../mock/data.js';
 import { fetchConversation } from '../actions/conversation.actions.js';
 import { fetchMessages } from '../actions/message.actions.js';
 
@@ -44,6 +43,32 @@ const chatSlice = createSlice({
         conversation.unread = 0;
       }
     },
+    updateChat:(state,action)=>{
+      const {chatId,lastMessage}=action.payload;
+      console.log('🔧 updateChat called with:', { chatId, lastMessage });
+      console.log('🔧 Last message structure:', lastMessage ? {
+        _id: lastMessage._id,
+        content: lastMessage.content,
+        createdAt: lastMessage.createdAt,
+        sender: lastMessage.sender
+      } : 'null');
+      console.log('🔧 Available conversations:', state.conversations.map(c => ({ _id: c._id, name: c.name })));
+      
+      const conversation=state.conversations.find((c)=>c._id===chatId || c.id===chatId )
+      if(conversation){
+        conversation.lastMessage=lastMessage;
+        conversation.updatedAt=lastMessage?.createdAt || new Date().toISOString();
+        conversation.unread=0;
+        console.log('✅ Updated conversation:', {
+          _id: conversation._id,
+          name: conversation.name,
+          lastMessage: conversation.lastMessage,
+          updatedAt: conversation.updatedAt
+        });
+      } else {
+        console.log('❌ Conversation not found for chatId:', chatId);
+      }
+    },
     markConversationAsRead: (state, action) => {
       const conversation = state.conversations.find(
         (c) => c._id === action.payload || c.id === action.payload
@@ -85,6 +110,25 @@ const chatSlice = createSlice({
         }
       }
     },
+    updateMessageStatus: (state, action) => {
+      const { messageId, status, readBy } = action.payload;
+      
+      // Find and update message across all conversations
+      Object.values(state.messages).forEach(messages => {
+        const message = messages.find(m => m._id === messageId || m.id === messageId);
+        if (message) {
+          message.status = status;
+          if (readBy) {
+            if (!message.readBy) {
+              message.readBy = [];
+            }
+            if (!message.readBy.includes(readBy)) {
+              message.readBy.push(readBy);
+            }
+          }
+        }
+      });
+    },
   },
   extraReducers:(builder)=>{
     builder.addCase(fetchConversation.pending, (state) => {
@@ -125,6 +169,8 @@ export const {
   togglePinned, 
   toggleFavorite,
   addReaction,
+  updateChat,
+  updateMessageStatus
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

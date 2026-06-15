@@ -4,22 +4,27 @@ import { motion } from 'framer-motion';
 import { Pin, Star, MoreVertical } from 'lucide-react';
 import { getTimeAgo } from '../../mock/data.js';
 import { toggleFavorite } from '../../store/slices/chatSlice.js';
-import { formatChatDate } from '../../utils/helper.js';
+import { formatChatDate, isUserOnline, getUserStatus, getStatusIndicatorClass, formatLastSeen } from '../../utils/helper.js';
 import Avatar from '../common/Avatar.jsx';
 
 export default function ConversationItem({ conversation }) {
   const dispatch = useDispatch();
   const currentConversationId = useSelector((state) => state.chat.currentConversationId);
+  const { onlineUsers, userStatuses } = useSelector((state) => state.socket);
   const isActive = conversation._id === currentConversationId;
   const [showActions, setShowActions] = React.useState(false);
 
+  // Get user online status for direct conversations
+  const isUserOnlineStatus = conversation.type === 'direct' && conversation.participants?.length > 0
+    ? isUserOnline(conversation.participants[0]._id, onlineUsers, userStatuses)
+    : false;
+
+  const userStatus = conversation.type === 'direct' && conversation.participants?.length > 0
+    ? getUserStatus(conversation.participants[0]._id, userStatuses)
+    : 'offline';
+
   const getStatusIndicator = (status) => {
-    const colors = {
-      online: 'bg-success',
-      away: 'bg-warning',
-      offline: 'bg-dark-text-muted',
-    };
-    return colors[status] || colors.offline;
+    return getStatusIndicatorClass(status);
   };
 
   return (
@@ -37,9 +42,10 @@ export default function ConversationItem({ conversation }) {
             alt={conversation.displayName}
             fallback={conversation.type === 'group' ? '👥' : '👤'}
           />
-          {conversation.type === 'direct' && conversation.isActive && (
+          {conversation.type === 'direct' && isUserOnlineStatus && (
             <div
-              className={`absolute bottom-0 right-0 w-3 h-3 ${getStatusIndicator(conversation.isActive)} rounded-full border border-dark-surface`}
+              className={`absolute bottom-0 right-0 w-3 h-3 ${getStatusIndicator(userStatus)} rounded-full border border-dark-surface`}
+              title={`${userStatus.charAt(0).toUpperCase() + userStatus.slice(1)}`}
             />
           )}
         </div>

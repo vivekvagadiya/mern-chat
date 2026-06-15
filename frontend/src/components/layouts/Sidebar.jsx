@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Settings, Bell, Plus, Pin, Star, Archive, Menu } from 'lucide-react';
 import ConversationItem from '../../components/chat/ConversationItem';
+import { CompactOnlineUsersList } from '../../components/chat/OnlineUsersList';
 import {
   setNotificationsOpen,
   setSettingsOpen,
@@ -129,6 +130,9 @@ export default function Sidebar() {
           </motion.div>
         </div>
       )}
+
+      {/* Online Users */}
+      <CompactOnlineUsersList />
 
       {/* Footer - Actions */}
       <div className="p-4 border-t border-dark-border flex items-center justify-between">
