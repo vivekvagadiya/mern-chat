@@ -29,6 +29,22 @@ export default function SocketProvider({ children }) {
     }
   }, []);
 
+  // Helper function to show notification
+  const showNotification = (message) => {
+    console.log('notification message',message)
+    try {
+      new Notification(`New message from ${message?.senderId?.username}`, {
+        body: message.content,
+        icon: message.senderId.avatar || '/default-avatar.png',
+        tag: message.chatId, // Prevent duplicate notifications
+        requireInteraction: false,
+        silent: false
+      });
+    } catch (error) {
+      console.error('Error showing notification:', error);
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -112,13 +128,25 @@ export default function SocketProvider({ children }) {
       
       // Show notification if not in active conversation
       if (message.chatId !== currentConversationId) {
-        // Show browser notification
+        console.log('Notification permission:', Notification.permission);
+        console.log('Should show notification - not in active conversation');
+        
+        // Show notification if permission granted
         if (Notification.permission === 'granted') {
-          new Notification(`New message from ${message.sender.name}`, {
-            body: message.content,
-            icon: message.sender.avatar || '/default-avatar.png'
+          showNotification(message);
+        } else if (Notification.permission === 'denied') {
+          console.log('Notification permission denied');
+        } else {
+          console.log('Notification permission not granted, requesting...');
+          Notification.requestPermission().then(permission => {
+            console.log('Permission result:', permission);
+            if (permission === 'granted') {
+              showNotification(message);
+            }
           });
         }
+      } else {
+        console.log('Not showing notification - user is in active conversation');
       }
     });
 
