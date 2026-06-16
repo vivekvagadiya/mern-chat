@@ -11,6 +11,7 @@ const {
   removeMembersFromGroupController,
   revokeAdminRoleController,
   updateGroupChatController,
+  searchChatController,
 } = require("../controller/chat.controller");
 const router = express.Router();
 const validateSchema = require("../validators/schema.validator");
@@ -24,13 +25,14 @@ const {
   revokeAdminRoleSchema,
   getChatByIdSchema,
   leaveGroupChatSchema,
+  searchChatSchema,
 } = require("../validators/chat.validator");
 const authenticate = require("../middleware/auth.middleware");
 
 router.use(authenticate);
 
 router.post(
-  "/create-direct-chat",
+  "/create-chat",
   validateSchema(createDirectChatSchema),
   createDirectChatController,
 );
@@ -75,5 +77,7 @@ router.put(
   validateSchema(updateGroupChatSchema),
   updateGroupChatController,
 );
+
+router.get("/search", validateSchema(searchChatSchema), searchChatController);
 
 module.exports = router;
