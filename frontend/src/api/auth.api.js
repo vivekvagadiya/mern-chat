@@ -1,9 +1,9 @@
-import axiosInstance from "./axios";
-import { tokenService } from "./tokenService";
+import axiosInstance from './axios';
+import { tokenService } from './tokenService';
 
 export const loginUser = async (data) => {
   try {
-    const response = await axiosInstance.post("/auth/login", data);
+    const response = await axiosInstance.post('/auth/login', data);
     if (response.data) {
       const { accessToken, refreshToken } = response.data.data;
       tokenService.setTokens({ accessToken, refreshToken });
@@ -11,13 +11,13 @@ export const loginUser = async (data) => {
     return response?.data;
   } catch (error) {
     // Return consistent error structure
-   throw error?.errors?.[0] || error
+    throw error?.errors?.[0] || error;
   }
 };
 
 export const logoutApi = async () => {
   try {
-    const response = await axiosInstance.post("/auth/logout");
+    const response = await axiosInstance.post('/auth/logout');
     return response?.data?.data;
   } catch (error) {
     throw error?.errors?.[0] || error;
@@ -44,3 +44,11 @@ export const resetPassword = async (data) => {
   }
 };
 
+export const registerUser = async (data) => {
+  try {
+    const response = await axiosInstance.post('auth/register', data);
+    return response?.data;
+  } catch (error) {
+    throw error?.errors?.[0] || error;
+  }
+};

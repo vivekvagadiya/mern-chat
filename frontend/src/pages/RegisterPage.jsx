@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, Eye, EyeOff, Loader2, Check, X } from 'lucide-react';
 import AuthLayout from '../layouts/AuthLayout';
+import { registerUser } from '../api/auth.api';
+import { useToast } from '../components/ToastContainer';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -16,6 +18,7 @@ const RegisterPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const toast=useToast();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -104,12 +107,19 @@ const RegisterPage = () => {
     setIsLoading(true);
     try {
       // TODO: Integrate API call here
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // await new Promise(resolve => setTimeout(resolve, 2000));
+      const response=await registerUser({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+      });
+      toast.success('Registration successful!');
       
       // TODO: Handle successful registration
       navigate('/login');
     } catch (error) {
       setErrors({ general: 'Registration failed. Please try again.' });
+      toast.error('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

@@ -44,12 +44,17 @@ const chatSlice = createSlice({
       }
     },
     updateChat:(state,action)=>{
-      const {chatId,lastMessage}=action.payload;
+      const {chatId,lastMessage,currentUserId}=action.payload;
       const conversation=state.conversations.find((c)=>c._id===chatId || c.id===chatId )
       if(conversation){
         conversation.lastMessage=lastMessage;
         conversation.updatedAt=lastMessage?.createdAt || new Date().toISOString();
-        conversation.unread=0;
+        
+        // Only increment unread count if current user is not the sender
+        if (currentUserId && lastMessage?.senderId !== currentUserId) {
+          conversation.unread = (conversation.unread || 0) + 1;
+        }
+        
         state.conversations.sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt));
       } else {
         console.log('❌ Conversation not found for chatId:', chatId);
@@ -97,19 +102,45 @@ const chatSlice = createSlice({
       }
     },
     updateMessageStatus: (state, action) => {
-      const { messageId, status, readBy } = action.payload;
+      const { messageId, status, readBy, deliveredTo } = action.payload;
       
       // Find and update message across all conversations
       Object.values(state.messages).forEach(messages => {
         const message = messages.find(m => m._id === messageId || m.id === messageId);
         if (message) {
           message.status = status;
+          
+          // Handle read status
           if (readBy) {
             if (!message.readBy) {
               message.readBy = [];
             }
-            if (!message.readBy.includes(readBy)) {
-              message.readBy.push(readBy);
+            // Check if user already in readBy
+            const existingReadIndex = message.readBy.findIndex(r => 
+              typeof r === 'object' ? r.userId === readBy : r === readBy
+            );
+            if (existingReadIndex === -1) {
+              message.readBy.push({
+                userId: readBy,
+                readAt: new Date()
+              });
+            }
+          }
+          
+          // Handle delivery status
+          if (deliveredTo) {
+            if (!message.deliveredTo) {
+              message.deliveredTo = [];
+            }
+            // Check if user already in deliveredTo
+            const existingDeliveredIndex = message.deliveredTo.findIndex(d => 
+              typeof d === 'object' ? d.userId === deliveredTo : d === deliveredTo
+            );
+            if (existingDeliveredIndex === -1) {
+              message.deliveredTo.push({
+                userId: deliveredTo,
+                deliveredAt: new Date()
+              });
             }
           }
         }

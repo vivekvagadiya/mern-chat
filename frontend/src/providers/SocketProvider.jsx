@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import { useDispatch, useSelector } from 'react-redux';
+import { fetchConversation } from '../store/actions/conversation.actions';
 
 import {
   addOnlineUser,
@@ -18,7 +19,7 @@ import { addMessage, updateChat, updateMessageStatus } from '../store/slices/cha
 export default function SocketProvider({ children }) {
   const dispatch = useDispatch();
 
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { currentConversationId } = useSelector((state) => state.chat);
 
   // Request notification permission on mount
@@ -94,10 +95,20 @@ export default function SocketProvider({ children }) {
       console.log('🔔 Message chatId:', message.chatId);
       
       // Add message to current conversation if active
-        dispatch(addMessage({
-          conversationId: message.chatId,
-          message: message
+      dispatch(addMessage({
+        conversationId: message.chatId,
+        message: message
+      }));
+      
+      // Update chat list and unread count if message is from another user
+      const currentUserId = user?._id || user?.id;
+      if (currentUserId && message.senderId !== currentUserId) {
+        dispatch(updateChat({
+          chatId: message.chatId,
+          lastMessage: message,
+          currentUserId: currentUserId,
         }));
+      }
       
       // Show notification if not in active conversation
       if (message.chatId !== currentConversationId) {
@@ -108,10 +119,13 @@ export default function SocketProvider({ children }) {
             icon: message.sender.avatar || '/default-avatar.png'
           });
         }
-        
-        // Update unread count - you'll need to add this action to chatSlice
-        // dispatch(incrementUnreadCount(message.chatId));
       }
+    });
+
+    socket.on('chat_created', (chat) => {
+      console.log('chat_created', chat);
+      // Refresh conversations list to include the new chat
+      dispatch(fetchConversation());
     });
 
     socket.on('chat_updated', (data) => {
@@ -121,6 +135,7 @@ export default function SocketProvider({ children }) {
         updateChat({
           chatId: data.chatId,
           lastMessage: data.lastMessage,
+          currentUserId: user?._id || user?.id,
         })
       );
     });
@@ -143,6 +158,23 @@ export default function SocketProvider({ children }) {
         messageId: data.messageId,
         status: 'read',
         readBy: data.readBy
+      }));
+    });
+
+    socket.on('message_delivered', (data) => {
+      console.log('message_delivered', data);
+      dispatch(updateMessageStatus({
+        messageId: data.messageId,
+        status: 'delivered',
+        deliveredTo: data.deliveredTo
+      }));
+    });
+
+    socket.on('chat_read', (data) => {
+      console.log('chat_read', data);
+      dispatch(updateChat({
+        chatId: data.chatId,
+        unreadCount: 0
       }));
     });
 
