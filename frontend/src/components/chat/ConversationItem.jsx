@@ -4,23 +4,38 @@ import { motion } from 'framer-motion';
 import { Pin, Star, MoreVertical } from 'lucide-react';
 import { getTimeAgo } from '../../mock/data.js';
 import { toggleFavorite } from '../../store/slices/chatSlice.js';
-import { formatChatDate } from '../../utils/helper.js';
+import { formatChatDate, isUserOnline, getUserStatus, getStatusIndicatorClass, formatLastSeen } from '../../utils/helper.js';
 import Avatar from '../common/Avatar.jsx';
 
 export default function ConversationItem({ conversation }) {
   const dispatch = useDispatch();
   const currentConversationId = useSelector((state) => state.chat.currentConversationId);
+  const { onlineUsers, userStatuses } = useSelector((state) => state.socket);
   const isActive = conversation._id === currentConversationId;
   const [showActions, setShowActions] = React.useState(false);
-
-  const getStatusIndicator = (status) => {
-    const colors = {
-      online: 'bg-success',
-      away: 'bg-warning',
-      offline: 'bg-dark-text-muted',
-    };
-    return colors[status] || colors.offline;
+  
+  // Get current user ID to find the other participant in direct conversations
+  const { user: currentUser } = useSelector((state) => state.auth);
+  
+  // Find the other user in direct conversation (not the current user)
+  const getOtherParticipant = (conversation) => {
+    if (!conversation.participants || conversation.type !== 'direct') return null;
+    return conversation.participants.find(p => p._id !== currentUser?.id) || conversation.participants[0];
   };
+  
+  const otherParticipant = getOtherParticipant(conversation);
+  
+  // Get user online status for direct conversations
+  const isUserOnlineStatus = conversation.type === 'direct' && otherParticipant
+    ? isUserOnline(otherParticipant._id, onlineUsers, userStatuses)
+    : false;
+  const userStatus = conversation.type === 'direct' && otherParticipant
+    ? getUserStatus(otherParticipant._id, userStatuses)
+    : 'offline';
+  const getStatusIndicator = (status) => {
+    return getStatusIndicatorClass(status);
+  };
+  console.log('status indi',getStatusIndicator(userStatus),userStatus)
 
   return (
     <motion.div
@@ -37,9 +52,10 @@ export default function ConversationItem({ conversation }) {
             alt={conversation.displayName}
             fallback={conversation.type === 'group' ? '👥' : '👤'}
           />
-          {conversation.type === 'direct' && conversation.isActive && (
+          {conversation.type === 'direct' && isUserOnlineStatus && (
             <div
-              className={`absolute bottom-0 right-0 w-3 h-3 ${getStatusIndicator(conversation.isActive)} rounded-full border border-dark-surface`}
+              className={`absolute bottom-0 right-0 w-3 h-3 ${getStatusIndicator(userStatus)} rounded-full border border-dark-surface`}
+              title={`${userStatus.charAt(0).toUpperCase() + userStatus.slice(1)}`}
             />
           )}
         </div>

@@ -9,6 +9,7 @@ const {
   removeMembersFromGroupChat,
   revokeAdminRole,
   updateGroupChat,
+  searchConversation,
 } = require("../services/chat.service");
 
 const apiResponse = require("../utils/apiResponse");
@@ -18,6 +19,22 @@ const createDirectChatController = async (req, res) => {
     const { participantId } = req.body;
     const userId = req.user.id;
     const chat = await createDirectChat(userId, participantId);
+
+    const io = req.app.get("io");
+    const socketManager = require("../socket/roomManager");
+
+    if (io) {
+      // Notify both participants about the new chat
+      const participants = [userId, participantId];
+
+      participants.forEach((participantId) => {
+        const userSocketId = socketManager.getUserSocketId(participantId);
+        if (userSocketId) {
+          io.to(userSocketId).emit("chat_created", chat);
+        }
+      });
+    }
+
     return apiResponse.success(res, "Direct chat created successfully", chat);
   } catch (error) {
     return apiResponse.error(res, error.message);
@@ -129,6 +146,17 @@ const revokeAdminRoleController = async (req, res) => {
   }
 };
 
+const searchChatController = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { query } = req.query;
+    const chats = await searchConversation(userId, query);
+    return apiResponse.success(res, "Chats searched successfully", chats);
+  } catch (error) {
+    return apiResponse.error(res, error.message);
+  }
+};
+
 module.exports = {
   addMembersToGroupChatController,
   assignAdminRoleController,
@@ -140,4 +168,5 @@ module.exports = {
   removeMembersFromGroupController,
   revokeAdminRoleController,
   updateGroupChatController,
+  searchChatController,
 };

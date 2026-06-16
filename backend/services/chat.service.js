@@ -1,4 +1,5 @@
 const Chat = require("../models/chat.model");
+const User = require("../models/user.model");
 
 const isAdmin = (chat, userId) => {
   return chat.admins.some(
@@ -73,14 +74,14 @@ const getUserChats = async (userId) => {
       chat.participants.length === 2
     ) {
       const otherParticipant = chat.participants.find(
-        (p) => p._id.toString() !== userId
+        (p) => p._id.toString() !== userId,
       );
 
       if (otherParticipant) {
         processedChat.avatar = otherParticipant.avatar;
         processedChat.name = otherParticipant.username;
       }
-    } 
+    }
     // group chat handling
     else if (chat.type === "group") {
       // processedChat.displayName = chat.name;
@@ -383,6 +384,62 @@ const revokeAdminRole = async (userId, chatId, memberId) => {
   return chat;
 };
 
+const searchConversation = async (userId, query) => {
+  if (!query?.trim()) {
+    return [];
+  }
+  const users = await User.find({
+    _id: { $ne: userId },
+    $or: [
+      { username: { $regex: query, $options: "i" } },
+      { email: { $regex: query, $options: "i" } },
+    ],
+  })
+    .select("_id username avatar email")
+    .limit(10);
+
+  if (!users.length) {
+    return [];
+  }
+
+  const userIds = users.map((u) => u._id);
+
+  const chats = await Chat.find({
+    type: "direct",
+    $and: [{ participants: userId }, { participants: { $in: userIds } }],
+  })
+    .populate({
+      path: "lastMessage",
+      select: "content sender createdAt",
+    })
+    .select("_id participants lastMessage");
+
+  const chatmap = new Map();
+
+  chats.forEach((chat) => {
+    const otherUser = chat.participants.find(
+      (p) => p.toString() !== userId.toString(),
+    );
+    if (otherUser) {
+      chatmap.set(otherUser.toString(), {
+        chatId: chat._id,
+        lastMessage: chat.lastMessage,
+      });
+    }
+  });
+
+  return users.map((user) => {
+    const chatData = chatmap.get(user._id.toString());
+
+    return {
+      ...user.toObject(),
+      chatExists: !!chatData,
+      chatId: chatData?.chatId || null,
+      lastMessage: chatData?.lastMessage || null,
+    };
+  });
+};
+
 module.exports = {
   createDirectChat,
   createGroupChat,
@@ -394,4 +451,5 @@ module.exports = {
   updateGroupChat,
   assignAdminRole,
   revokeAdminRole,
+  searchConversation,
 };

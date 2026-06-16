@@ -19,6 +19,12 @@ const createDirectChatSchema = z.object({
   }),
 });
 
+const searchChatSchema = z.object({
+  query: z.object({
+    search: z.string().optional(),
+  }),
+});
+
 /**
  * CREATE GROUP CHAT
  */
@@ -146,4 +152,5 @@ module.exports = {
   revokeAdminRoleSchema,
   getChatByIdSchema,
   leaveGroupChatSchema,
+  searchChatSchema
 };

@@ -3,8 +3,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Settings, Bell, Plus, Pin, Star, Archive, Menu } from 'lucide-react';
 import ConversationItem from '../../components/chat/ConversationItem';
+import { CompactOnlineUsersList } from '../../components/chat/OnlineUsersList';
 import {
   setNotificationsOpen,
+  setSearchOpen,
   setSettingsOpen,
   setSidebarOpen,
   toggleSearch,
@@ -17,6 +19,8 @@ export default function Sidebar() {
   const { conversations, loading, messages ,selectConversation} = useConversation();
   console.log('conversations', conversations, messages);
   const { mobileView } = useSelector((state) => state.ui);
+  const {onlineUsers}=useSelector((state)=>state.socket);
+  console.log('onlineUsers',onlineUsers)
 
   const pinnedConversations = conversations.filter((c) => c.isPinned);
   const favoriteConversations = conversations.filter((c) => c.isFavorite);
@@ -130,6 +134,9 @@ export default function Sidebar() {
         </div>
       )}
 
+      {/* Online Users */}
+      <CompactOnlineUsersList />
+
       {/* Footer - Actions */}
       <div className="p-4 border-t border-dark-border flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -157,6 +164,7 @@ export default function Sidebar() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+          onClick={()=>dispatch(setSearchOpen(true))}
         >
           <Plus size={20} />
         </motion.button>

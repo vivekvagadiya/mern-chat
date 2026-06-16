@@ -13,19 +13,26 @@ import { formatChatDate, getTimeStamp } from '../../utils/helper.js';
 export default function ChatArea() {
   const dispatch = useDispatch();
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const { mobileView } = useSelector((state) => state.ui);
   const { messages, currentConversation, pagination } = useConversation();
   console.log('messages', messages);
 
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  };
+
   useEffect(() => {
     if (currentConversation) {
       dispatch(markConversationAsRead(currentConversation._id));
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      scrollToBottom();
     }
-  }, [currentConversation, dispatch, messages.length]);
+  }, [currentConversation, dispatch]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollToBottom();
   }, [messages.length]);
 
   if (!currentConversation) {
@@ -104,50 +111,52 @@ export default function ChatArea() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 scroll-smooth">
-        <AnimatePresence>
-          {messages.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="h-full flex items-center justify-center"
-            >
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto mb-4">
-                  <Clock size={32} className="text-primary" />
+      <div className="flex-1 relative overflow-hidden">
+        <div className="h-full overflow-y-auto px-4 py-4 space-y-4 scroll-smooth" ref={messagesContainerRef}>
+          <AnimatePresence>
+            {messages.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="h-full flex items-center justify-center"
+              >
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto mb-4">
+                    <Clock size={32} className="text-primary" />
+                  </div>
+                  <h3 className="text-sm font-medium text-dark-text mb-1">No messages yet</h3>
+                  <p className="text-xs text-dark-text-muted">Start the conversation!</p>
                 </div>
-                <h3 className="text-sm font-medium text-dark-text mb-1">No messages yet</h3>
-                <p className="text-xs text-dark-text-muted">Start the conversation!</p>
-              </div>
-            </motion.div>
-          ) : (
-            messages.map((message, index) => {
-              const showTimestamp =
-                index === 0 ||
-                getTimeStamp(messages[index - 1].createdAt) !== getTimeStamp(message.createdAt);
+              </motion.div>
+            ) : (
+              messages.map((message, index) => {
+                const showTimestamp =
+                  index === 0 ||
+                  getTimeStamp(messages[index - 1].createdAt) !== getTimeStamp(message.createdAt);
 
-              return (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  {showTimestamp && (
-                    <div className="flex items-center justify-center my-4">
-                      <div className="text-xs text-dark-text-muted bg-dark-surface-alt px-3 py-1 rounded-full">
-                        {getTimeStamp(message.createdAt)}
+                return (
+                  <motion.div
+                    key={message._id || message.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    {showTimestamp && (
+                      <div className="flex items-center justify-center my-4">
+                        <div className="text-xs text-dark-text-muted bg-dark-surface-alt px-3 py-1 rounded-full">
+                          {getTimeStamp(message.createdAt)}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  <MessageBubble message={message} />
-                </motion.div>
-              );
-            })
-          )}
-        </AnimatePresence>
-        <div ref={messagesEndRef} />
+                    )}
+                    <MessageBubble message={message} />
+                  </motion.div>
+                );
+              })
+            )}
+          </AnimatePresence>
+          <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {/* Message Composer */}
