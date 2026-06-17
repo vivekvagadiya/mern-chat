@@ -46,4 +46,18 @@ const getMe = asyncHandler(async (req, res) => {
   return apiResponse.success(res, "User profile fetched", { user });
 });
 
-module.exports = { register, login, refreshToken, logout, getMe };
+const updateUserProfile = asyncHandler(async (req, res) => {
+  const { username } = req.body;
+  const userId=req.user.id;
+  const user = await authService.updateUserProfile(userId, { username });
+  return apiResponse.success(res, "User profile updated", { user });
+});
+
+const uploadUserAvatar = asyncHandler(async (req, res) => {
+  const file = req.file;
+  const userId = req.user.id;
+  const user = await authService.uploadUserAvatar(userId, file.buffer);
+  return apiResponse.success(res, "User avatar uploaded", { user });
+});
+
+module.exports = { register, login, refreshToken, logout, getMe, updateUserProfile, uploadUserAvatar };

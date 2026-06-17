@@ -3,6 +3,7 @@ const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const { generateTokens } = require("../utils/generateTokens.js");
 const bcrypt = require("bcrypt");
+const uploadToCloudinary = require("../utils/uploadToCloudinary.js");
 
 const register = async (username, email, password) => {
   const existingUser = await User.findOne({
@@ -99,4 +100,40 @@ const logout = async (userId) => {
   return true;
 };
 
-module.exports = { register, login, refreshToken, logout };
+const uploadUserAvatar = async (userId, fileBuffer) => {
+  if (!fileBuffer) {
+    throw new Error("File buffer is required");
+  }
+
+  const result = await uploadToCloudinary(fileBuffer, "user-avatars");
+  console.log('result',result)
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      avatar: result,
+    },
+    { new: true },
+  );
+
+  return user;
+};
+
+const updateUserProfile = async (userId, profileData) => {
+  const { username } = profileData;
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { username },
+    { new: true },
+  ).select("-password -refreshToken -tokenVersion");
+  return user;
+};
+module.exports = {
+  register,
+  login,
+  refreshToken,
+  logout,
+  uploadUserAvatar,
+  updateUserProfile,
+};
