@@ -4,6 +4,7 @@ import MainLayout from './layouts/MainLayout.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import { ToastProvider, useToast } from './components/ToastContainer.jsx';
 import { setToastHandler } from './api/axios.js';
@@ -85,6 +86,14 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <MainLayout />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
           </ProtectedRoute>
         }
       />

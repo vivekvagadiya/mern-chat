@@ -9,6 +9,7 @@ import { setSidebarOpen } from '../../store/slices/uiSlice.js';
 import { markConversationAsRead } from '../../store/slices/chatSlice.js';
 import { useConversation } from '../../hooks/useConversation.js';
 import { formatChatDate, getTimeStamp } from '../../utils/helper.js';
+import Avatar from '../common/Avatar.jsx';
 
 export default function ChatArea() {
   const dispatch = useDispatch();
@@ -67,9 +68,10 @@ export default function ChatArea() {
           )}
 
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg">
+            {/* <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg">
               {currentConversation.avatar}
-            </div>
+            </div> */}
+            <Avatar src={currentConversation.avatar} alt={currentConversation.username || ''}size='w-10 h-10'  />
 
             <div>
               <h2 className="font-semibold text-dark-text">{currentConversation.name}</h2>
@@ -112,7 +114,10 @@ export default function ChatArea() {
 
       {/* Messages */}
       <div className="flex-1 relative overflow-hidden">
-        <div className="h-full overflow-y-auto px-4 py-4 space-y-4 scroll-smooth" ref={messagesContainerRef}>
+        <div
+          className="h-full overflow-y-auto px-4 py-4 space-y-4 scroll-smooth"
+          ref={messagesContainerRef}
+        >
           <AnimatePresence>
             {messages.length === 0 ? (
               <motion.div

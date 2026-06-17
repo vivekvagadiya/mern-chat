@@ -101,6 +101,10 @@ const chatSlice = createSlice({
         }
       }
     },
+    updateUser(state,action)=>{
+      const user=action.payload;
+      
+    // },
     updateMessageStatus: (state, action) => {
       const { messageId, status, readBy, deliveredTo } = action.payload;
       

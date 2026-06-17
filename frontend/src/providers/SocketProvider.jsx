@@ -206,6 +206,11 @@ export default function SocketProvider({ children }) {
       }));
     });
 
+    socket.on('userAvatarUpdated', (user) => {
+      console.log('userAvatarUpdated', user);
+      dispatch(updateUser(user));
+    });
+
     socket.on('error', (error) => {
       console.error('Socket error:', error);
     });
