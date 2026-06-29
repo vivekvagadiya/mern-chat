@@ -1,11 +1,26 @@
 const messageService = require("../services/message.service");
 const apiResponse = require("../utils/apiResponse");
 const Chat = require("../models/chat.model");
-const socketManager=require('../socket/roomManager')
+const socketManager = require('../socket/roomManager');
+const uploadToCloudinary = require("./upload.cloudinary");
+
 const sendMessageController = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { chatId, content, type, mediaUrl } = req.body;
+    let { chatId, content, type, mediaUrl } = req.body;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer, "chat_attachments");
+      mediaUrl = result.secure_url;
+      const resourceType = result.resource_type;
+      if (resourceType === 'image') type = 'image';
+      else if (resourceType === 'video') type = 'video';
+      else type = 'file';
+    }
+
+    if (type !== 'text' && !mediaUrl) {
+      return apiResponse.error(res, "Media URL or file is required for non-text messages", 400);
+    }
     const message = await messageService.sendMessage(chatId, userId, {
       content,
       type,
