@@ -5,10 +5,13 @@ import { Send, Paperclip, Smile, Mic, Plus, X } from 'lucide-react';
 import { addMessage, updateChat } from '../../store/slices/chatSlice.js';
 import { sendMessageAction } from '../../store/actions/message.actions.js';
 import socketService from '../../services/socket.service.js';
+import EmojiPicker from 'emoji-picker-react';
 
 export default function MessageComposer({ conversationId }) {
   const dispatch = useDispatch();
   const textareaRef = useRef(null);
+  const emojiPickerRef = useRef(null);
+  const attachmentMenuRef = useRef(null);
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -18,6 +21,23 @@ export default function MessageComposer({ conversationId }) {
   const { user } = useSelector((state) => state.auth);
 
   const socket = socketService.getSocket();
+
+  // Handle click outside to close popups
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+      if (attachmentMenuRef.current && !attachmentMenuRef.current.contains(event.target)) {
+        setShowAttachmentMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
@@ -159,7 +179,7 @@ export default function MessageComposer({ conversationId }) {
       <div className="flex items-end gap-3 p-3 rounded-xl bg-dark-surface-alt border border-glass-light backdrop-blur-md hover:border-glass-light transition-all focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20">
         {/* Attachment & Emoji */}
         <div className="flex items-center gap-2">
-          <div className="relative">
+          <div className="relative" ref={attachmentMenuRef}>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -177,12 +197,12 @@ export default function MessageComposer({ conversationId }) {
                   initial={{ opacity: 0, scale: 0.9, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: -10 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="absolute bottom-full left-0 mb-2 bg-dark-surface-2 border border-dark-border rounded-lg shadow-elevation-2 overflow-hidden z-30"
+                  className="absolute bottom-full left-0 mb-2 w-48 bg-dark-surface-2 border border-dark-border rounded-lg shadow-elevation-2 overflow-hidden z-30"
                 >
                   {[
                     { icon: '📎', label: 'Files', action: handleAttachmentClick },
                     { icon: '🖼️', label: 'Images', action: handleAttachmentClick },
-                    { icon: '🎵', label: 'Audio', action: handleAttachmentClick },
+                    // { icon: '🎵', label: 'Audio', action: handleAttachmentClick },
                     { icon: '🎬', label: 'Video', action: handleAttachmentClick },
                   ].map((item) => (
                     <motion.button
@@ -201,7 +221,7 @@ export default function MessageComposer({ conversationId }) {
           </div>
 
           {/* Emoji Picker */}
-          <div className="relative">
+          <div className="relative" ref={emojiPickerRef}>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -219,24 +239,15 @@ export default function MessageComposer({ conversationId }) {
                   initial={{ opacity: 0, scale: 0.9, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: -10 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="absolute bottom-full left-0 mb-2 bg-dark-surface-2 border border-dark-border rounded-lg shadow-elevation-2 p-3 z-30"
+                  className="absolute bottom-full left-0 mb-2 z-30 shadow-elevation-2 overflow-hidden rounded-lg"
                 >
-                  <div className="grid grid-cols-6 gap-2">
-                    {EMOJIS.map((emoji) => (
-                      <motion.button
-                        key={emoji}
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => {
-                          setMessage(message + emoji);
-                          setShowEmojiPicker(false);
-                        }}
-                        className="w-8 h-8 hover:bg-dark-surface rounded flex items-center justify-center text-lg transition-colors"
-                      >
-                        {emoji}
-                      </motion.button>
-                    ))}
-                  </div>
+                  <EmojiPicker
+                    theme="dark"
+                    emojiStyle="native"
+                    onEmojiClick={(emojiObject) => {
+                      setMessage((prev) => prev + emojiObject.emoji);
+                    }}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
