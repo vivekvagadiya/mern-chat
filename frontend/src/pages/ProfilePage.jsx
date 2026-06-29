@@ -1,32 +1,35 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Briefcase, 
-  Camera, 
-  Edit2, 
-  Save, 
-  X, 
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  Camera,
+  Edit2,
+  Save,
+  X,
   Calendar,
   Link as LinkIcon,
   Check,
-  Loader2
+  Loader2,
+  ArrowBigLeft,
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useToast } from '../components/ToastContainer';
 import Avatar from '../components/common/Avatar.jsx';
 import { updateProfile, uploadUserAvatar } from '../api/user.api.js';
 import { fetchUserProfile } from '../store/actions/user.actions.js';
+import { useNavigate } from 'react-router-dom';
 
 const ProfilePage = () => {
   const dispatch = useDispatch();
   const toast = useToast();
+  const navigate = useNavigate();
   const { user: currentUser } = useSelector((state) => state.auth);
   const fileInputRef = useRef(null);
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -41,24 +44,24 @@ const ProfilePage = () => {
     location: currentUser?.location || '',
     role: currentUser?.role || '',
     website: currentUser?.website || '',
-    dateOfBirth: currentUser?.dateOfBirth || ''
+    dateOfBirth: currentUser?.dateOfBirth || '',
   });
-  
+
   const [previewAvatar, setPreviewAvatar] = useState(currentUser?.avatar || null);
   const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: '',
       }));
     }
   };
@@ -66,20 +69,21 @@ const ProfilePage = () => {
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
+        // 5MB limit
         toast.error('Avatar size should be less than 5MB');
         return;
       }
-      
+
       setSelectedAvatarFile(file);
-      
+
       // Show preview in modal
       const reader = new FileReader();
       reader.onloadend = () => {
         setTempAvatarPreview(reader.result);
       };
       reader.readAsDataURL(file);
-      
+
       // Show confirmation modal
       setShowAvatarModal(true);
     }
@@ -87,23 +91,23 @@ const ProfilePage = () => {
 
   const handleAvatarUpload = async () => {
     if (!selectedAvatarFile) return;
-    
+
     setIsUploadingAvatar(true);
     try {
       const formData = new FormData();
       formData.append('avatar', selectedAvatarFile);
-      
+
       const result = await uploadUserAvatar(formData);
       console.log('Avatar uploaded:', result);
-      
+
       // Update preview with new avatar
       setPreviewAvatar(tempAvatarPreview);
-      
+
       // Update user profile in Redux store
       dispatch(fetchUserProfile());
-      
+
       toast.success('Avatar updated successfully!');
-      
+
       // Close modal and reset states
       setShowAvatarModal(false);
       setSelectedAvatarFile(null);
@@ -123,46 +127,46 @@ const ProfilePage = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.username.trim()) {
       newErrors.username = 'Username is required';
     } else if (formData.username.length < 3) {
       newErrors.username = 'Username must be at least 3 characters';
     }
-    
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-    
-    if (formData.phone && !/^\+?[\d\s-()]+$/.test(formData.phone)) {
-      newErrors.phone = 'Invalid phone number format';
-    }
-    
-    if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
-      newErrors.website = 'Website must be a valid URL';
-    }
-    
+
+    // if (!formData.email.trim()) {
+    //   newErrors.email = 'Email is required';
+    // } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    //   newErrors.email = 'Email is invalid';
+    // }
+
+    // if (formData.phone && !/^\+?[\d\s-()]+$/.test(formData.phone)) {
+    //   newErrors.phone = 'Invalid phone number format';
+    // }
+
+    // if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
+    //   newErrors.website = 'Website must be a valid URL';
+    // }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSave = async () => {
-    if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
-      return;
-    }
-    
+    // if (!validateForm()) {
+    //   toast.error('Please fix the errors in the form');
+    //   return;
+    // }
+
     setIsLoading(true);
     try {
       // TODO: Call API to update user profile
       // await updateUserProfile(formData);
 
-      const result=await updateProfile({username:formData.username});
-      dispatch(fetchUserProfile())
+      const result = await updateProfile({ username: formData.username });
+      dispatch(fetchUserProfile());
       console.log(result);
-      
+
       toast.success('Profile updated successfully!');
       setIsEditing(false);
     } catch (error) {
@@ -181,7 +185,7 @@ const ProfilePage = () => {
       location: currentUser?.location || '',
       role: currentUser?.role || '',
       website: currentUser?.website || '',
-      dateOfBirth: currentUser?.dateOfBirth || ''
+      dateOfBirth: currentUser?.dateOfBirth || '',
     });
     setPreviewAvatar(currentUser?.avatar || null);
     setErrors({});
@@ -193,7 +197,7 @@ const ProfilePage = () => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -206,9 +210,18 @@ const ProfilePage = () => {
         className="max-w-4xl mx-auto"
       >
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-dark-text mb-2">Profile Settings</h1>
-          <p className="text-dark-text-muted">Manage your personal information and preferences</p>
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-dark-text mb-2">Profile Settings</h1>
+            <p className="text-dark-text-muted">Manage your personal information and preferences</p>
+          </div>
+          <button
+            className="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowBigLeft className="w-5 h-5" />
+            Back
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -225,9 +238,9 @@ const ProfilePage = () => {
                 <div className="relative inline-block">
                   <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20">
                     {previewAvatar ? (
-                      <img 
-                        src={previewAvatar} 
-                        alt="Profile" 
+                      <img
+                        src={previewAvatar}
+                        alt="Profile"
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -236,7 +249,7 @@ const ProfilePage = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   {isEditing && (
                     <motion.button
                       whileHover={{ scale: 1.1 }}
@@ -244,8 +257,8 @@ const ProfilePage = () => {
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploadingAvatar}
                       className={`absolute bottom-2 right-2 w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg transition-colors ${
-                        isUploadingAvatar 
-                          ? 'bg-gray-500 cursor-not-allowed' 
+                        isUploadingAvatar
+                          ? 'bg-gray-500 cursor-not-allowed'
                           : 'bg-primary hover:bg-primary/90'
                       }`}
                     >
@@ -257,7 +270,7 @@ const ProfilePage = () => {
                     </motion.button>
                   )}
                 </div>
-                
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -266,17 +279,15 @@ const ProfilePage = () => {
                   disabled={isUploadingAvatar}
                   className="hidden"
                 />
-                
+
                 <h2 className="text-xl font-bold text-dark-text mt-4">
                   {formData.username || 'Your Name'}
                 </h2>
-                <p className="text-dark-text-muted mt-1">
-                  {formData.role || 'No role specified'}
-                </p>
+                <p className="text-dark-text-muted mt-1">{formData.role || 'No role specified'}</p>
               </div>
 
               {/* Quick Stats */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="text-center p-3 bg-dark-surface-alt rounded-lg">
                   <p className="text-lg font-bold text-primary">0</p>
                   <p className="text-xs text-dark-text-muted">Chats</p>
@@ -285,10 +296,10 @@ const ProfilePage = () => {
                   <p className="text-lg font-bold text-primary">0</p>
                   <p className="text-xs text-dark-text-muted">Groups</p>
                 </div>
-                <div className="text-center p-3 bg-dark-surface-alt rounded-lg">
+                {/* <div className="text-center p-3 bg-dark-surface-alt rounded-lg">
                   <p className="text-lg font-bold text-primary">0</p>
                   <p className="text-xs text-dark-text-muted">Media</p>
-                </div>
+                </div> */}
               </div>
 
               {/* Action Buttons */}
@@ -343,15 +354,16 @@ const ProfilePage = () => {
           >
             <div className="bg-dark-surface border border-dark-border rounded-2xl p-6 shadow-xl">
               <h3 className="text-lg font-semibold text-dark-text mb-6">Personal Information</h3>
-              
+
               <div className="space-y-6">
                 {/* Username */}
                 <div>
-                  <label className="block text-sm font-medium text-dark-text mb-2">
-                    Username
-                  </label>
+                  <label className="block text-sm font-medium text-dark-text mb-2">Username</label>
                   <div className="relative">
-                    <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted" />
+                    <User
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted"
+                    />
                     <input
                       type="text"
                       name="username"
@@ -375,7 +387,10 @@ const ProfilePage = () => {
                     Email Address
                   </label>
                   <div className="relative">
-                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted" />
+                    <Mail
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted"
+                    />
                     <input
                       type="email"
                       name="email"
@@ -388,9 +403,7 @@ const ProfilePage = () => {
                       placeholder="Enter your email"
                     />
                   </div>
-                  {errors.email && (
-                    <p className="mt-1 text-xs text-red-500">{errors.email}</p>
-                  )}
+                  {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
                 </div>
 
                 {/* Phone */}
@@ -399,7 +412,10 @@ const ProfilePage = () => {
                     Phone Number
                   </label>
                   <div className="relative">
-                    <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted" />
+                    <Phone
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted"
+                    />
                     <input
                       type="tel"
                       name="phone"
@@ -412,16 +428,12 @@ const ProfilePage = () => {
                       placeholder="+1 (555) 123-4567"
                     />
                   </div>
-                  {errors.phone && (
-                    <p className="mt-1 text-xs text-red-500">{errors.phone}</p>
-                  )}
+                  {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
                 </div>
 
                 {/* Bio */}
                 <div>
-                  <label className="block text-sm font-medium text-dark-text mb-2">
-                    Bio
-                  </label>
+                  <label className="block text-sm font-medium text-dark-text mb-2">Bio</label>
                   <textarea
                     name="bio"
                     value={formData.bio}
@@ -435,11 +447,12 @@ const ProfilePage = () => {
 
                 {/* Location */}
                 <div>
-                  <label className="block text-sm font-medium text-dark-text mb-2">
-                    Location
-                  </label>
+                  <label className="block text-sm font-medium text-dark-text mb-2">Location</label>
                   <div className="relative">
-                    <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted" />
+                    <MapPin
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted"
+                    />
                     <input
                       type="text"
                       name="location"
@@ -454,11 +467,12 @@ const ProfilePage = () => {
 
                 {/* Role */}
                 <div>
-                  <label className="block text-sm font-medium text-dark-text mb-2">
-                    Role
-                  </label>
+                  <label className="block text-sm font-medium text-dark-text mb-2">Role</label>
                   <div className="relative">
-                    <Briefcase size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted" />
+                    <Briefcase
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted"
+                    />
                     <input
                       type="text"
                       name="role"
@@ -473,11 +487,12 @@ const ProfilePage = () => {
 
                 {/* Website */}
                 <div>
-                  <label className="block text-sm font-medium text-dark-text mb-2">
-                    Website
-                  </label>
+                  <label className="block text-sm font-medium text-dark-text mb-2">Website</label>
                   <div className="relative">
-                    <LinkIcon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted" />
+                    <LinkIcon
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted"
+                    />
                     <input
                       type="url"
                       name="website"
@@ -490,9 +505,7 @@ const ProfilePage = () => {
                       placeholder="https://yourwebsite.com"
                     />
                   </div>
-                  {errors.website && (
-                    <p className="mt-1 text-xs text-red-500">{errors.website}</p>
-                  )}
+                  {errors.website && <p className="mt-1 text-xs text-red-500">{errors.website}</p>}
                 </div>
 
                 {/* Date of Birth */}
@@ -501,7 +514,10 @@ const ProfilePage = () => {
                     Date of Birth
                   </label>
                   <div className="relative">
-                    <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted" />
+                    <Calendar
+                      size={16}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-dark-text-muted"
+                    />
                     <input
                       type="date"
                       name="dateOfBirth"
@@ -555,7 +571,7 @@ const ProfilePage = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ type: "spring", bounce: 0.3 }}
+                transition={{ type: 'spring', bounce: 0.3 }}
                 className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-dark-surface border border-dark-border rounded-2xl shadow-2xl z-50 overflow-hidden"
               >
                 {/* Header */}
@@ -573,9 +589,9 @@ const ProfilePage = () => {
                     <div className="relative">
                       <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20">
                         {tempAvatarPreview ? (
-                          <img 
-                            src={tempAvatarPreview} 
-                            alt="New avatar preview" 
+                          <img
+                            src={tempAvatarPreview}
+                            alt="New avatar preview"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -584,7 +600,7 @@ const ProfilePage = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       {/* File info */}
                       {selectedAvatarFile && (
                         <div className="mt-4 text-center">
