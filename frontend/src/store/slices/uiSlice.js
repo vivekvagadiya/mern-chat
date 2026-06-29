@@ -10,6 +10,7 @@ const uiSlice = createSlice({
     settingsOpen: false,
     theme: 'dark',
     mobileView: false,
+    createGroup: false,
   },
   reducers: {
     toggleSidebar: (state) => {
@@ -23,6 +24,9 @@ const uiSlice = createSlice({
     },
     setSearchOpen: (state, action) => {
       state.searchOpen = action.payload;
+    },
+    setCreateGroupToggle: (state, action) => {
+      state.createGroup = action.payload;
     },
     toggleNotifications: (state) => {
       state.notificationsOpen = !state.notificationsOpen;
@@ -48,10 +52,10 @@ const uiSlice = createSlice({
   },
 });
 
-export const { 
-  toggleSidebar, 
+export const {
+  toggleSidebar,
   setSidebarOpen,
-  toggleSearch, 
+  toggleSearch,
   setSearchOpen,
   toggleNotifications,
   setNotificationsOpen,
@@ -60,6 +64,7 @@ export const {
   toggleSettings,
   setSettingsOpen,
   setMobileView,
+  setCreateGroupToggle,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;

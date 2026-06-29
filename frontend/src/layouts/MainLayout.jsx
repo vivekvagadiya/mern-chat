@@ -8,21 +8,20 @@ import NotificationsPanel from '../components/panels/NotificationsPanel';
 import UserProfilePanel from '../components/panels/UserProfilePanel';
 import SettingsPanel from '../components/panels/SettingsPanel';
 import { setMobileView, setSidebarOpen } from '../store/slices/uiSlice';
+import CreateGroupModal from '../components/modals/CreateGroupModal';
 
 export default function MainLayout() {
   const dispatch = useDispatch();
-  const { sidebarOpen, mobileView } = useSelector(state => state.ui);
-  const connected = useSelector(
-  (state) => state.socket.connected
-);
+  const { sidebarOpen, mobileView } = useSelector((state) => state.ui);
+  const connected = useSelector((state) => state.socket.connected);
 
-console.log('connected',connected);
+  console.log('connected', connected);
 
   useEffect(() => {
     const handleResize = () => {
       const isMobile = window.innerWidth < 768;
       dispatch(setMobileView(isMobile));
-      
+
       if (isMobile && sidebarOpen) {
         // Don't auto-close on resize, let user control
       }
@@ -76,6 +75,7 @@ console.log('connected',connected);
 
       {/* Modals & Panels */}
       <SearchModal />
+      <CreateGroupModal />
       <NotificationsPanel />
       <UserProfilePanel />
       <SettingsPanel />

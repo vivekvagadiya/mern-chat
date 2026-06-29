@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import ConversationItem from '../../components/chat/ConversationItem';
 import { CompactOnlineUsersList } from '../../components/chat/OnlineUsersList';
 import {
+  setCreateGroupToggle,
   setNotificationsOpen,
   setSearchOpen,
   setSettingsOpen,
@@ -18,12 +19,12 @@ export default function Sidebar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all'); // all, pinned, favorites
-  const { conversations, loading, messages ,selectConversation} = useConversation();
+  const { conversations, loading, messages, selectConversation } = useConversation();
   console.log('conversations', conversations, messages);
   const { mobileView } = useSelector((state) => state.ui);
-  const {onlineUsers}=useSelector((state)=>state.socket);
+  const { onlineUsers } = useSelector((state) => state.socket);
   const { user } = useSelector((state) => state.auth);
-  console.log('onlineUsers',onlineUsers)
+  console.log('onlineUsers', onlineUsers);
 
   const pinnedConversations = conversations.filter((c) => c.isPinned);
   const favoriteConversations = conversations.filter((c) => c.isFavorite);
@@ -168,7 +169,7 @@ export default function Sidebar() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
-            onClick={()=>dispatch(setSearchOpen(true))}
+            onClick={() => dispatch(setCreateGroupToggle(true))}
           >
             <Plus size={20} />
           </motion.button>
@@ -183,7 +184,11 @@ export default function Sidebar() {
         >
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg group-hover:from-primary/30 group-hover:to-accent/30 transition-colors">
             {user?.avatar ? (
-              <img src={user.avatar} alt="Profile" className="w-full h-full rounded-full object-cover" />
+              <img
+                src={user.avatar}
+                alt="Profile"
+                className="w-full h-full rounded-full object-cover"
+              />
             ) : (
               <User size={20} className="text-primary" />
             )}
@@ -192,9 +197,7 @@ export default function Sidebar() {
             <p className="text-sm font-medium text-dark-text truncate">
               {user?.username || 'Your Profile'}
             </p>
-            <p className="text-xs text-dark-text-muted">
-              View Profile
-            </p>
+            <p className="text-xs text-dark-text-muted">View Profile</p>
           </div>
         </motion.button>
       </div>
