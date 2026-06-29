@@ -9,7 +9,7 @@ import Avatar from '../common/Avatar.jsx';
 
 export default function ConversationItem({ conversation }) {
   const dispatch = useDispatch();
-  const currentConversationId = useSelector((state) => state.chat.currentConversationId);
+  const { currentConversationId, typingUsers } = useSelector((state) => state.chat);
   const { onlineUsers, userStatuses } = useSelector((state) => state.socket);
   const isActive = conversation._id === currentConversationId;
   const [showActions, setShowActions] = React.useState(false);
@@ -36,6 +36,10 @@ export default function ConversationItem({ conversation }) {
     return getStatusIndicatorClass(status);
   };
   console.log('status indi',getStatusIndicator(userStatus),userStatus)
+
+  const currentTypingUserIds = typingUsers?.[conversation._id] || [];
+  const otherTypingUserIds = currentTypingUserIds.filter((id) => id !== (currentUser?._id || currentUser?.id));
+  const isTyping = otherTypingUserIds.length > 0;
 
   return (
     <motion.div
@@ -73,8 +77,12 @@ export default function ConversationItem({ conversation }) {
             </span>
           </div>
 
-          <p className="text-xs text-dark-text-muted truncate">
-            {conversation?.lastMessage?.content || 'No messages yet'}
+          <p className="text-xs truncate">
+            {isTyping ? (
+              <span className="text-primary font-medium italic animate-pulse">typing...</span>
+            ) : (
+              <span className="text-dark-text-muted">{conversation?.lastMessage?.content || 'No messages yet'}</span>
+            )}
           </p>
         </div>
 

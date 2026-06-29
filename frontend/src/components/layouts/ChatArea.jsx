@@ -16,8 +16,12 @@ export default function ChatArea() {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const { mobileView } = useSelector((state) => state.ui);
+  const { user } = useSelector((state) => state.auth);
+  const { typingUsers } = useSelector((state) => state.chat);
   const { messages, currentConversation, pagination } = useConversation();
-  console.log('messages', messages);
+
+  const currentTypingUserIds = typingUsers?.[currentConversation?._id] || [];
+  const otherTypingUserIds = currentTypingUserIds.filter((id) => id !== (user?._id || user?.id));
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
@@ -71,16 +75,24 @@ export default function ChatArea() {
             {/* <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg">
               {currentConversation.avatar}
             </div> */}
-            <Avatar src={currentConversation.avatar} alt={currentConversation.username || ''}size='w-10 h-10'  />
+            <Avatar
+              src={currentConversation.avatar}
+              alt={currentConversation.username || ''}
+              size="w-10 h-10"
+            />
 
             <div>
               <h2 className="font-semibold text-dark-text">{currentConversation.name}</h2>
               <p className="text-xs text-dark-text-muted">
-                {currentConversation.type === 'group'
-                  ? `${conversationMemberCount} members`
-                  : currentConversation.status === 'online'
-                    ? 'Active now'
-                    : `Last seen ${new Date(currentConversation.createdAt).toLocaleTimeString()}`}
+                {otherTypingUserIds.length > 0 ? (
+                  <span className="text-primary font-medium italic animate-pulse">typing...</span>
+                ) : currentConversation.type === 'group' ? (
+                  `${conversationMemberCount} members`
+                ) : currentConversation.status === 'online' ? (
+                  'Active now'
+                ) : (
+                  `Last seen ${new Date(currentConversation.createdAt).toLocaleTimeString()}`
+                )}
               </p>
             </div>
           </div>
@@ -160,6 +172,35 @@ export default function ChatArea() {
               })
             )}
           </AnimatePresence>
+
+          {/* Typing Indicator */}
+          {otherTypingUserIds.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex justify-start gap-3 mt-4"
+            >
+              <div className="bg-dark-surface-alt border border-glass-light rounded-lg rounded-bl-none px-4 py-3 w-fit flex items-center gap-1.5 backdrop-blur-sm">
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, ease: 'easeInOut' }}
+                  className="w-1.5 h-1.5 bg-dark-text-muted rounded-full"
+                />
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, delay: 0.2, ease: 'easeInOut' }}
+                  className="w-1.5 h-1.5 bg-dark-text-muted rounded-full"
+                />
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, delay: 0.4, ease: 'easeInOut' }}
+                  className="w-1.5 h-1.5 bg-dark-text-muted rounded-full"
+                />
+              </div>
+            </motion.div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
       </div>

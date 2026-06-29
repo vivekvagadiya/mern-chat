@@ -47,7 +47,7 @@ export default function MessageComposer({ conversationId }) {
 
       const timeout = setTimeout(() => {
         socketService.getSocket()?.emit('typing_stop', { chatId: conversationId });
-      }, 1000);
+      }, 2000);
 
       return () => {
         clearTimeout(timeout);
@@ -82,7 +82,7 @@ export default function MessageComposer({ conversationId }) {
         // Update conversation list with new last message
         console.log('📤 Calling updateChat with:', {
           chatId: conversationId,
-          lastMessage: result
+          lastMessage: result,
         });
         dispatch(
           updateChat({

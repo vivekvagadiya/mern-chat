@@ -13,6 +13,7 @@ const chatSlice = createSlice({
     currentConversationId: null,
     loading: false,
     error: null,
+    typingUsers: {},
   },
   reducers: {
     setCurrentConversation: (state, action) => {
@@ -147,6 +148,23 @@ const chatSlice = createSlice({
         }
       });
     },
+    setTyping: (state, action) => {
+      const { chatId, userId } = action.payload;
+      if (!state.typingUsers) state.typingUsers = {};
+      if (!state.typingUsers[chatId]) {
+        state.typingUsers[chatId] = [];
+      }
+      if (!state.typingUsers[chatId].includes(userId)) {
+        state.typingUsers[chatId].push(userId);
+      }
+    },
+    removeTyping: (state, action) => {
+      const { chatId, userId } = action.payload;
+      if (!state.typingUsers) state.typingUsers = {};
+      if (state.typingUsers[chatId]) {
+        state.typingUsers[chatId] = state.typingUsers[chatId].filter(id => id !== userId);
+      }
+    },
   },
   extraReducers:(builder)=>{
     builder.addCase(fetchConversation.pending, (state) => {
@@ -188,7 +206,9 @@ export const {
   toggleFavorite,
   addReaction,
   updateChat,
-  updateMessageStatus
+  updateMessageStatus,
+  setTyping,
+  removeTyping
 } = chatSlice.actions;
 
 export default chatSlice.reducer;
