@@ -13,6 +13,7 @@ const {
   updateGroupChatController,
   searchChatController,
   clearChatController,
+  deleteChatController,
 } = require("../controller/chat.controller");
 const router = express.Router();
 const validateSchema = require("../validators/schema.validator");
@@ -83,6 +84,12 @@ router.delete(
   "/clear-chat/:chatId",
   validateSchema(getChatByIdSchema),
   clearChatController,
+);
+
+router.delete(
+  "/delete-chat/:chatId",
+  validateSchema(getChatByIdSchema),
+  deleteChatController,
 );
 
 router.get("/search", validateSchema(searchChatSchema), searchChatController);

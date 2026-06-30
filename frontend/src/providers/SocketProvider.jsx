@@ -21,6 +21,7 @@ import {
   setTyping,
   removeTyping,
   clearChat,
+  deleteChat,
 } from '../store/slices/chatSlice';
 
 export default function SocketProvider({ children }) {
@@ -127,6 +128,11 @@ export default function SocketProvider({ children }) {
     socket.on('chat_cleared', (data) => {
       console.log('chat cleared', data);
       dispatch(clearChat(data._id));
+    });
+
+    socket.on('chat_deleted', (data) => {
+      console.log('chat deleted', data);
+      dispatch(deleteChat(data._id));
     });
 
     socket.on('message_received', (message) => {

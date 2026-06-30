@@ -119,6 +119,28 @@ const chatSlice = createSlice({
       }
     },
 
+    deleteChat: (state, action) => {
+      const chatId = action.payload;
+
+      state.conversations = state.conversations.filter(
+        (c) => c._id !== chatId && c.id !== chatId
+      );
+
+      if (state.messages[chatId]) {
+        delete state.messages[chatId];
+      }
+      if (state.chatInfo[chatId]) {
+        delete state.chatInfo[chatId];
+      }
+      if (state.pagination[chatId]) {
+        delete state.pagination[chatId];
+      }
+
+      if (state.currentConversationId === chatId) {
+        state.currentConversationId = null;
+      }
+    },
+
     updateMessageStatus: (state, action) => {
       const { messageId, status, readBy, deliveredTo } = action.payload;
 
@@ -226,6 +248,7 @@ export const {
   setTyping,
   removeTyping,
   clearChat,
+  deleteChat,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

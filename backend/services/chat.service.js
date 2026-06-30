@@ -462,6 +462,22 @@ const clearChat = async (userId, chatId) => {
   return getChatById(chatId, userId);
 };
 
+const deleteConversation = async (userId, chatId) => {
+  const chat = await Chat.findById(chatId).populate("participants", "username avatar");
+  if (!chat) {
+    throw new Error("chat not found");
+  }
+
+  if (!isParticipant(chat, userId)) {
+    throw new Error("Access denied: Not a participant");
+  }
+  await Message.deleteMany({ chatId: chatId });
+
+  await Chat.findByIdAndDelete(chatId);
+
+  return chat;
+};
+
 module.exports = {
   createDirectChat,
   createGroupChat,
@@ -475,4 +491,5 @@ module.exports = {
   revokeAdminRole,
   searchConversation,
   clearChat,
+  deleteConversation,
 };

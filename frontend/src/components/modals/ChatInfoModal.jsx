@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Mail, Calendar, Phone, Trash2, Ban, Flag } from 'lucide-react';
 import Avatar from '../common/Avatar.jsx';
 import { useToast } from '../ToastContainer.jsx';
-import { clearChat } from '../../api/conversation.js';
+import { clearChat, deleteChat } from '../../api/conversation.js';
 
 export default function ChatInfoModal({ isOpen, onClose, conversation }) {
   if (!conversation) return null;
@@ -13,6 +13,16 @@ export default function ChatInfoModal({ isOpen, onClose, conversation }) {
     try {
       const response = await clearChat(conversation._id);
       toast.success(response?.message || 'Chat cleared successfully');
+      onClose();
+    } catch (error) {
+      toast.error(error?.message || '');
+    }
+  };
+
+  const handleDeleteChat = async () => {
+    try {
+      const response = await deleteChat(conversation._id);
+      toast.success(response?.message || 'Chat deleted successfully');
       onClose();
     } catch (error) {
       toast.error(error?.message || '');
@@ -120,7 +130,10 @@ export default function ChatInfoModal({ isOpen, onClose, conversation }) {
                     <Flag size={18} className="text-warning" />
                     <span>Clear Chat</span>
                   </button>
-                  <button className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-error/10 border border-error/20 hover:bg-error/20 transition-colors text-error font-medium">
+                  <button
+                    onClick={handleDeleteChat}
+                    className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-error/10 border border-error/20 hover:bg-error/20 transition-colors text-error font-medium"
+                  >
                     <Trash2 size={18} />
                     <span>Delete Chat</span>
                   </button>

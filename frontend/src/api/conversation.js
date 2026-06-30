@@ -47,3 +47,11 @@ export const clearChat = async (chatId) => {
     throw error?.errors?.[0] || error;
   }
 };
+export const deleteChat = async (chatId) => {
+  try {
+    const response = await axiosInstance.delete(`chat/delete-chat/${chatId}`);
+    return response?.data?.data;
+  } catch (error) {
+    throw error?.errors?.[0] || error;
+  }
+};
