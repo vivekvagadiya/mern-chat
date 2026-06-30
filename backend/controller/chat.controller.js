@@ -69,6 +69,18 @@ const createGroupChatController = async (req, res) => {
     const { name, participantIds } = req.body;
     const userId = req.user.id;
     const chat = await createGroupChat(userId, name, participantIds);
+    const io = req.app.get("io");
+    const socketManager = require("../socket/roomManager");
+
+    if (io) {
+      const participants = [userId, ...participantIds];
+      participants.forEach((participantId) => {
+        const userSocketId = socketManager.getUserSocketId(participantId);
+        if (userSocketId) {
+          io.to(userSocketId).emit("chat_created", chat);
+        }
+      });
+    }
     return apiResponse.success(res, "Group chat created successfully", chat);
   } catch (error) {
     return apiResponse.error(res, error.message);

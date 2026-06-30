@@ -55,7 +55,7 @@ export default function ChatArea() {
   }
 
   const conversationMemberCount =
-    currentConversation.type === 'group' ? currentConversation.memberCount : 1;
+    currentConversation.type === 'group' ? currentConversation.participants?.length || 0 : 1;
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-dark-surface via-dark-bg to-dark-surface-alt overflow-hidden">

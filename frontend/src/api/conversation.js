@@ -22,12 +22,19 @@ export const searchConversation = async (search) => {
   }
 };
 
-export const createDirectConversation=async(data)=>{
+export const createDirectConversation = async (data) => {
   try {
-    const response=await axiosInstance.post('chat/create-chat',data);
+    const response = await axiosInstance.post('chat/create-chat', data);
     return response?.data?.data;
   } catch (error) {
     throw error?.errors?.[0] || error;
-    
   }
-}
+};
+export const createGroupChat = async (data) => {
+  try {
+    const response = await axiosInstance.post('chat/create-group-chat', data);
+    return response?.data?.data;
+  } catch (error) {
+    throw error?.errors?.[0] || error;
+  }
+};

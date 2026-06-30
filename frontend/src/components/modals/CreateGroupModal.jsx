@@ -5,8 +5,9 @@ import { X, Search, User, Users, Check } from 'lucide-react';
 import { setCreateGroupToggle } from '../../store/slices/uiSlice.js';
 import { useDebounce } from '../../hooks/useDebounce.js';
 import { useToast } from '../ToastContainer.jsx';
-import { searchConversation } from '../../api/conversation.js';
+import { createGroupChat, searchConversation } from '../../api/conversation.js';
 import Avatar from '../common/Avatar.jsx';
+import { setCurrentConversation } from '../../store/slices/chatSlice.js';
 
 export default function CreateGroupModal() {
   const dispatch = useDispatch();
@@ -14,6 +15,7 @@ export default function CreateGroupModal() {
   const [groupName, setGroupName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
   console.log(selectedUsers);
   const [users, setUsers] = useState([]);
   const toast = useToast();
@@ -44,6 +46,29 @@ export default function CreateGroupModal() {
 
     getConversation();
   }, [debounceSearch]);
+
+  const handleCreation = async () => {
+    if (selectedUsers?.length < 2) {
+      toast.error('Please select at least 2 users');
+      return;
+    }
+    const payload = {
+      name: groupName,
+      participantIds: selectedUsers.map((user) => user.id),
+    };
+    setLoading(true);
+    try {
+      const response = await createGroupChat(payload);
+      console.log(response);
+      dispatch(setCreateGroupToggle(false));
+      dispatch(setCurrentConversation(response?._id));
+      toast.success(response?.message || 'Group chat created successfully');
+    } catch (error) {
+      toast.error(error?.message || 'Failed to create group chat');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -218,6 +243,7 @@ export default function CreateGroupModal() {
               <div className="p-4 border-t border-dark-border bg-dark-surface-alt">
                 <button
                   disabled={!groupName.trim() || selectedUsers.length === 0}
+                  onClick={handleCreation}
                   className="w-full py-2.5 bg-gradient-to-r from-primary to-primary-dark hover:from-primary-light hover:to-primary text-white rounded-lg font-medium shadow-elevation-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Create Group

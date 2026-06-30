@@ -73,6 +73,9 @@ export default function MessageComposer({ conversationId }) {
       return () => {
         clearTimeout(timeout);
       };
+    } else {
+      // Explicitly stop typing if the message becomes empty
+      socketService.getSocket()?.emit('typing_stop', { chatId: conversationId });
     }
   }, [message, conversationId]);
 
@@ -83,6 +86,8 @@ export default function MessageComposer({ conversationId }) {
     if (!hasText && !hasAttachments) return;
 
     setIsSending(true);
+    // Immediately tell others we stopped typing while sending
+    socketService.getSocket()?.emit('typing_stop', { chatId: conversationId });
 
     try {
       if (hasAttachments) {
