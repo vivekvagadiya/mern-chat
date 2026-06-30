@@ -1,5 +1,6 @@
 const Chat = require("../models/chat.model");
 const User = require("../models/user.model");
+const Message = require("../models/message.model");
 
 const isAdmin = (chat, userId) => {
   return chat.admins.some(
@@ -440,6 +441,27 @@ const searchConversation = async (userId, query) => {
   });
 };
 
+const clearChat = async (userId, chatId) => {
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    throw new Error("chat not found");
+  }
+
+  if (!isParticipant(chat, userId)) {
+    throw new Error("Access denied: Not a participant");
+  }
+
+  await Message.deleteMany({ chatId: chatId });
+
+  await Chat.findByIdAndUpdate(chatId, {
+    $set: {
+      lastMessage: null,
+    },
+  });
+
+  return getChatById(chatId, userId);
+};
+
 module.exports = {
   createDirectChat,
   createGroupChat,
@@ -452,4 +474,5 @@ module.exports = {
   assignAdminRole,
   revokeAdminRole,
   searchConversation,
+  clearChat,
 };

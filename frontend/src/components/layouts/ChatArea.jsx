@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Video, Info, Clock, Menu, Check, CheckCheck } from 'lucide-react';
@@ -10,6 +10,8 @@ import { markConversationAsRead } from '../../store/slices/chatSlice.js';
 import { useConversation } from '../../hooks/useConversation.js';
 import { formatChatDate, getTimeStamp } from '../../utils/helper.js';
 import Avatar from '../common/Avatar.jsx';
+import ChatInfoModal from '../modals/ChatInfoModal';
+import GroupInfoModal from '../modals/GroupInfoModal';
 
 export default function ChatArea() {
   const dispatch = useDispatch();
@@ -19,6 +21,7 @@ export default function ChatArea() {
   const { user } = useSelector((state) => state.auth);
   const { typingUsers } = useSelector((state) => state.chat);
   const { messages, currentConversation, pagination } = useConversation();
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
   const currentTypingUserIds = typingUsers?.[currentConversation?._id] || [];
   const otherTypingUserIds = currentTypingUserIds.filter((id) => id !== (user?._id || user?.id));
@@ -117,6 +120,7 @@ export default function ChatArea() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => setIsInfoModalOpen(true)}
             className="p-2 hover:bg-dark-surface-alt rounded-lg transition-colors text-dark-text-muted hover:text-dark-text"
           >
             <Info size={20} />
@@ -209,6 +213,20 @@ export default function ChatArea() {
       <div className="p-4 border-t border-dark-border backdrop-blur-md bg-dark-surface/50">
         <MessageComposer conversationId={currentConversation?._id} />
       </div>
+      {/* Modals */}
+      {currentConversation?.type === 'group' ? (
+        <GroupInfoModal 
+          isOpen={isInfoModalOpen} 
+          onClose={() => setIsInfoModalOpen(false)} 
+          conversation={currentConversation} 
+        />
+      ) : (
+        <ChatInfoModal 
+          isOpen={isInfoModalOpen} 
+          onClose={() => setIsInfoModalOpen(false)} 
+          conversation={currentConversation} 
+        />
+      )}
     </div>
   );
 }

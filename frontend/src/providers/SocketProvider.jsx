@@ -14,7 +14,14 @@ import {
 } from '../store/slices/socketSlice';
 
 import socketService from '../services/socket.service';
-import { addMessage, updateChat, updateMessageStatus, setTyping, removeTyping } from '../store/slices/chatSlice';
+import {
+  addMessage,
+  updateChat,
+  updateMessageStatus,
+  setTyping,
+  removeTyping,
+  clearChat,
+} from '../store/slices/chatSlice';
 
 export default function SocketProvider({ children }) {
   const dispatch = useDispatch();
@@ -115,6 +122,11 @@ export default function SocketProvider({ children }) {
     socket.on('user_stopped_typing', (data) => {
       console.log('user stopped typing', data);
       dispatch(removeTyping(data));
+    });
+
+    socket.on('chat_cleared', (data) => {
+      console.log('chat cleared', data);
+      dispatch(clearChat(data._id));
     });
 
     socket.on('message_received', (message) => {

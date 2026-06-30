@@ -10,6 +10,7 @@ const {
   revokeAdminRole,
   updateGroupChat,
   searchConversation,
+  clearChat,
 } = require("../services/chat.service");
 
 const apiResponse = require("../utils/apiResponse");
@@ -169,6 +170,32 @@ const searchChatController = async (req, res) => {
   }
 };
 
+const clearChatController = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { chatId } = req.params;
+    const chat = await clearChat(userId, chatId);
+
+    const io = req.app.get("io");
+    const socketManager = require("../socket/roomManager");
+
+    if (io) {
+      const users = chat.participants;
+      users.forEach((user) => {
+        const userSocketId = socketManager.getUserSocketId(user._id.toString());
+
+        if (userSocketId) {
+          io.to(userSocketId).emit("chat_cleared", chat);
+        }
+      });
+    }
+
+    return apiResponse.success(res, "Chat cleared successfully", chat);
+  } catch (error) {
+    return apiResponse.error(res, error.message);
+  }
+};
+
 module.exports = {
   addMembersToGroupChatController,
   assignAdminRoleController,
@@ -181,4 +208,5 @@ module.exports = {
   revokeAdminRoleController,
   updateGroupChatController,
   searchChatController,
+  clearChatController,
 };

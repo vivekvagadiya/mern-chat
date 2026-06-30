@@ -12,6 +12,7 @@ const {
   revokeAdminRoleController,
   updateGroupChatController,
   searchChatController,
+  clearChatController,
 } = require("../controller/chat.controller");
 const router = express.Router();
 const validateSchema = require("../validators/schema.validator");
@@ -76,6 +77,12 @@ router.put(
   "/update-group-chat/:chatId",
   validateSchema(updateGroupChatSchema),
   updateGroupChatController,
+);
+
+router.delete(
+  "/clear-chat/:chatId",
+  validateSchema(getChatByIdSchema),
+  clearChatController,
 );
 
 router.get("/search", validateSchema(searchChatSchema), searchChatController);
