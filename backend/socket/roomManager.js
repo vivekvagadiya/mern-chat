@@ -1,5 +1,5 @@
 const userSocketMap = new Map(); // userId -> { socketId, user, connectedAt }
-const Chat=require("../models/chat.model");
+const Chat = require("../models/chat.model");
 const joinChatRoom = (io, socket, chatId) => {
   socket.join(chatId);
   console.log(`User ${socket.userId} joined chat ${chatId}`);
@@ -26,9 +26,9 @@ const addUserSocket = (userId, socketId, user) => {
       username: user.username,
       email: user.email,
       avatar: user.avatar,
-      status: user.status || 'online'
+      status: user.status || "online",
     },
-    connectedAt: new Date()
+    connectedAt: new Date(),
   });
   console.log(`✅ User ${user.username} added to online users`);
 };
@@ -36,7 +36,6 @@ const addUserSocket = (userId, socketId, user) => {
 const removeUserSocket = (userId) => {
   const userInfo = userSocketMap.get(userId);
   if (userInfo) {
-    console.log(`❌ User ${userInfo.user.username} removed from online users`,userInfo);
     userSocketMap.delete(userId);
     return userInfo.user;
   }
@@ -48,49 +47,49 @@ const getUserSocketId = (userId) => {
   return userInfo ? userInfo.socketId : null;
 };
 
-const getOnlineUsers = async ({userId=null}) => {
-  const onlineUsers = Array.from(userSocketMap.values()).map(userInfo => ({
+const getOnlineUsers = async ({ userId = null }) => {
+  const onlineUsers = Array.from(userSocketMap.values()).map((userInfo) => ({
     ...userInfo.user,
     isOnline: true,
-    connectedAt: userInfo.connectedAt
+    connectedAt: userInfo.connectedAt,
   }));
-  
+
   let filteredUsers = onlineUsers;
-  
+
   if (userId) {
     // Filter out current user
-    filteredUsers = onlineUsers.filter(user => user._id.toString() !== userId.toString());
-    
+    filteredUsers = onlineUsers.filter(
+      (user) => user._id.toString() !== userId.toString(),
+    );
+
     // Get user's conversations to filter online users
     try {
       const userChats = await Chat.find({
         participants: userId,
-        type: "direct" // Only direct messages
-      }).populate('participants', '_id username avatar email status');
-      
+        type: "direct", // Only direct messages
+      }).populate("participants", "_id username avatar email status");
+      console.log("userChats", userChats);
+
       // Get IDs of users the current user has conversations with
       const conversationUserIds = new Set();
-      userChats.forEach(chat => {
-        chat.participants.forEach(participant => {
+      userChats.forEach((chat) => {
+        chat.participants.forEach((participant) => {
           if (participant._id.toString() !== userId.toString()) {
             conversationUserIds.add(participant._id.toString());
           }
         });
       });
-      
+
       // Filter online users to only those in conversations
-      filteredUsers = filteredUsers.filter(user => 
-        conversationUserIds.has(user._id.toString())
+      filteredUsers = filteredUsers.filter((user) =>
+        conversationUserIds.has(user._id.toString()),
       );
-      
-      console.log(`📊 Online users in conversations with ${userId}: ${filteredUsers.length}/${onlineUsers.length}`);
     } catch (error) {
-      console.error('Error filtering online users by conversations:', error);
+      console.error("Error filtering online users by conversations:", error);
       // Fallback to just excluding current user
     }
   }
-  
-  console.log(`📊 Current online users: ${filteredUsers.length}`);
+
   return filteredUsers;
 };
 
@@ -106,5 +105,5 @@ module.exports = {
   removeUserSocket,
   getUserSocketId,
   getOnlineUsers,
-  isUserOnline
+  isUserOnline,
 };

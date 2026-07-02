@@ -289,11 +289,13 @@ const ProfilePage = () => {
               {/* Quick Stats */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="text-center p-3 bg-dark-surface-alt rounded-lg">
-                  <p className="text-lg font-bold text-primary">0</p>
+                  <p className="text-lg font-bold text-primary">{currentUser.chatCount || 0}</p>
                   <p className="text-xs text-dark-text-muted">Chats</p>
                 </div>
                 <div className="text-center p-3 bg-dark-surface-alt rounded-lg">
-                  <p className="text-lg font-bold text-primary">0</p>
+                  <p className="text-lg font-bold text-primary">
+                    {currentUser.groupChatCount || 0}
+                  </p>
                   <p className="text-xs text-dark-text-muted">Groups</p>
                 </div>
                 {/* <div className="text-center p-3 bg-dark-surface-alt rounded-lg">
@@ -567,87 +569,89 @@ const ProfilePage = () => {
               />
 
               {/* Modal */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ type: 'spring', bounce: 0.3 }}
-                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-dark-surface border border-dark-border rounded-2xl shadow-2xl z-50 overflow-hidden"
-              >
-                {/* Header */}
-                <div className="p-6 border-b border-dark-border">
-                  <h3 className="text-lg font-semibold text-dark-text">Change Profile Picture</h3>
-                  <p className="text-sm text-dark-text-muted mt-1">
-                    Preview your new avatar before uploading
-                  </p>
-                </div>
+              <div className="fixed inset-0 flex items-center justify-center p-4 z-50 pointer-events-none">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ type: 'spring', bounce: 0.3 }}
+                  className="w-full max-w-md bg-dark-surface border border-dark-border rounded-2xl shadow-2xl overflow-hidden pointer-events-auto"
+                >
+                  {/* Header */}
+                  <div className="p-6 border-b border-dark-border">
+                    <h3 className="text-lg font-semibold text-dark-text">Change Profile Picture</h3>
+                    <p className="text-sm text-dark-text-muted mt-1">
+                      Preview your new avatar before uploading
+                    </p>
+                  </div>
 
-                {/* Content */}
-                <div className="p-6">
-                  {/* Avatar Preview */}
-                  <div className="flex justify-center mb-6">
-                    <div className="relative">
-                      <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20">
-                        {tempAvatarPreview ? (
-                          <img
-                            src={tempAvatarPreview}
-                            alt="New avatar preview"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                            <User size={48} className="text-primary" />
+                  {/* Content */}
+                  <div className="p-6">
+                    {/* Avatar Preview */}
+                    <div className="flex justify-center mb-6">
+                      <div className="relative">
+                        <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20">
+                          {tempAvatarPreview ? (
+                            <img
+                              src={tempAvatarPreview}
+                              alt="New avatar preview"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                              <User size={48} className="text-primary" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* File info */}
+                        {selectedAvatarFile && (
+                          <div className="mt-4 text-center">
+                            <p className="text-sm text-dark-text font-medium">
+                              {selectedAvatarFile.name}
+                            </p>
+                            <p className="text-xs text-dark-text-muted">
+                              {(selectedAvatarFile.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
                           </div>
                         )}
                       </div>
+                    </div>
 
-                      {/* File info */}
-                      {selectedAvatarFile && (
-                        <div className="mt-4 text-center">
-                          <p className="text-sm text-dark-text font-medium">
-                            {selectedAvatarFile.name}
-                          </p>
-                          <p className="text-xs text-dark-text-muted">
-                            {(selectedAvatarFile.size / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                        </div>
-                      )}
+                    {/* Action Buttons */}
+                    <div className="flex gap-3">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleAvatarCancel}
+                        disabled={isUploadingAvatar}
+                        className="flex-1 p-3 bg-dark-surface-alt hover:bg-dark-surface-2 text-dark-text rounded-lg transition-colors font-medium disabled:opacity-50"
+                      >
+                        Cancel
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={handleAvatarUpload}
+                        disabled={isUploadingAvatar}
+                        className="flex-1 p-3 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {isUploadingAvatar ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Check size={16} />
+                            Upload
+                          </>
+                        )}
+                      </motion.button>
                     </div>
                   </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-3">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleAvatarCancel}
-                      disabled={isUploadingAvatar}
-                      className="flex-1 p-3 bg-dark-surface-alt hover:bg-dark-surface-2 text-dark-text rounded-lg transition-colors font-medium disabled:opacity-50"
-                    >
-                      Cancel
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleAvatarUpload}
-                      disabled={isUploadingAvatar}
-                      className="flex-1 p-3 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {isUploadingAvatar ? (
-                        <>
-                          <Loader2 size={16} className="animate-spin" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Check size={16} />
-                          Upload
-                        </>
-                      )}
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              </div>
             </>
           )}
         </AnimatePresence>

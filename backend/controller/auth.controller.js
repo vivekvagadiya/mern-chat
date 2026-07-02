@@ -32,23 +32,19 @@ const refreshToken = asyncHandler(async (req, res) => {
 const logout = asyncHandler(async (req, res) => {
   // The user ID comes from the authenticate middleware
   await authService.logout(req.user._id);
-  
+
   return apiResponse.success(res, "Logout successful");
 });
 
 const getMe = asyncHandler(async (req, res) => {
-  const user = {
-    id: req.user._id,
-    username: req.user.username,
-    email: req.user.email,
-    avatar: req.user.avatar,
-  };
-  return apiResponse.success(res, "User profile fetched", { user });
+  const userId = req.user.id;
+  const result = await authService.myProfile(userId);
+  return apiResponse.success(res, "User profile fetched", result);
 });
 
 const updateUserProfile = asyncHandler(async (req, res) => {
   const { username } = req.body;
-  const userId=req.user.id;
+  const userId = req.user.id;
   const user = await authService.updateUserProfile(userId, { username });
   return apiResponse.success(res, "User profile updated", { user });
 });
@@ -60,4 +56,12 @@ const uploadUserAvatar = asyncHandler(async (req, res) => {
   return apiResponse.success(res, "User avatar uploaded", { user });
 });
 
-module.exports = { register, login, refreshToken, logout, getMe, updateUserProfile, uploadUserAvatar };
+module.exports = {
+  register,
+  login,
+  refreshToken,
+  logout,
+  getMe,
+  updateUserProfile,
+  uploadUserAvatar,
+};

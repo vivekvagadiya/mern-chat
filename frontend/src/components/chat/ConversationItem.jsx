@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Pin, Star, MoreVertical } from 'lucide-react';
 import { getTimeAgo } from '../../mock/data.js';
 import { toggleFavorite } from '../../store/slices/chatSlice.js';
-import { formatChatDate, isUserOnline, getUserStatus, getStatusIndicatorClass, formatLastSeen } from '../../utils/helper.js';
+import { formatChatDate } from '../../utils/helper.js';
 import Avatar from '../common/Avatar.jsx';
 
 export default function ConversationItem({ conversation }) {
@@ -25,18 +25,6 @@ export default function ConversationItem({ conversation }) {
   
   const otherParticipant = getOtherParticipant(conversation);
   
-  // Get user online status for direct conversations
-  const isUserOnlineStatus = conversation.type === 'direct' && otherParticipant
-    ? isUserOnline(otherParticipant._id, onlineUsers, userStatuses)
-    : false;
-  const userStatus = conversation.type === 'direct' && otherParticipant
-    ? getUserStatus(otherParticipant._id, userStatuses)
-    : 'offline';
-  const getStatusIndicator = (status) => {
-    return getStatusIndicatorClass(status);
-  };
-  console.log('status indi',getStatusIndicator(userStatus),userStatus)
-
   const currentTypingUserIds = typingUsers?.[conversation._id] || [];
   const otherTypingUserIds = currentTypingUserIds.filter((id) => id !== (currentUser?._id || currentUser?.id));
   const isTyping = otherTypingUserIds.length > 0;
@@ -50,19 +38,13 @@ export default function ConversationItem({ conversation }) {
     >
       <div className="p-3 flex items-start gap-3">
         {/* Avatar & Status */}
-        <div className="relative flex-shrink-0">
-          <Avatar
-            src={conversation.type === 'direct' ? conversation.avatar : conversation.groupAvatar}
-            alt={conversation.displayName}
-            fallback={conversation.type === 'group' ? '👥' : '👤'}
-          />
-          {conversation.type === 'direct' && isUserOnlineStatus && (
-            <div
-              className={`absolute bottom-0 right-0 w-3 h-3 ${getStatusIndicator(userStatus)} rounded-full border border-dark-surface`}
-              title={`${userStatus.charAt(0).toUpperCase() + userStatus.slice(1)}`}
-            />
-          )}
-        </div>
+        <Avatar
+          src={conversation.type === 'direct' ? conversation.avatar : conversation.groupAvatar}
+          alt={conversation.displayName}
+          fallback={conversation.type === 'group' ? '👥' : '👤'}
+          userId={otherParticipant?._id || otherParticipant?.id}
+          showStatus={conversation.type === 'direct'}
+        />
 
         {/* Content */}
         <div className="flex-1 min-w-0">

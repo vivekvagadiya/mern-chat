@@ -12,6 +12,7 @@ import { formatChatDate, getTimeStamp } from '../../utils/helper.js';
 import Avatar from '../common/Avatar.jsx';
 import ChatInfoModal from '../modals/ChatInfoModal';
 import GroupInfoModal from '../modals/GroupInfoModal';
+import { useUserPresence } from '../../hooks/useUserPresence';
 
 export default function ChatArea() {
   const dispatch = useDispatch();
@@ -25,6 +26,14 @@ export default function ChatArea() {
 
   const currentTypingUserIds = typingUsers?.[currentConversation?._id] || [];
   const otherTypingUserIds = currentTypingUserIds.filter((id) => id !== (user?._id || user?.id));
+
+  const getOtherParticipant = (conv) => {
+    if (!conv || !conv.participants || conv.type !== 'direct') return null;
+    return conv.participants.find(p => p._id !== user?.id && p._id !== user?._id) || conv.participants[0];
+  };
+
+  const otherParticipant = getOtherParticipant(currentConversation);
+  const { isOnline, lastSeenText } = useUserPresence(otherParticipant?._id || otherParticipant?.id);
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
@@ -82,6 +91,8 @@ export default function ChatArea() {
               src={currentConversation.avatar}
               alt={currentConversation.username || ''}
               size="w-10 h-10"
+              userId={otherParticipant?._id || otherParticipant?.id}
+              showStatus={currentConversation.type === 'direct'}
             />
 
             <div>
@@ -91,10 +102,8 @@ export default function ChatArea() {
                   <span className="text-primary font-medium italic animate-pulse">typing...</span>
                 ) : currentConversation.type === 'group' ? (
                   `${conversationMemberCount} members`
-                ) : currentConversation.status === 'online' ? (
-                  'Active now'
                 ) : (
-                  `Last seen ${new Date(currentConversation.createdAt).toLocaleTimeString()}`
+                  lastSeenText
                 )}
               </p>
             </div>

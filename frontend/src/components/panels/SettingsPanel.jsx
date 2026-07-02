@@ -24,7 +24,6 @@ export default function SettingsPanel() {
 
   const sections = [
     { id: 'general', label: 'General', icon: Palette },
-    { id: 'Group', label: 'Create Group', icon: Users },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'privacy', label: 'Privacy & Safety', icon: Lock },
   ];

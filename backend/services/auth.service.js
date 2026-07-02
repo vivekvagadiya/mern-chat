@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const { generateTokens } = require("../utils/generateTokens.js");
 const bcrypt = require("bcrypt");
 const uploadToCloudinary = require("../utils/uploadToCloudinary.js");
+const Chat = require("../models/chat.model.js");
 
 const register = async (username, email, password) => {
   const existingUser = await User.findOne({
@@ -106,7 +107,6 @@ const uploadUserAvatar = async (userId, fileBuffer) => {
   }
 
   const result = await uploadToCloudinary(fileBuffer, "user-avatars");
-  console.log('result',result)
 
   const user = await User.findByIdAndUpdate(
     userId,
@@ -129,6 +129,27 @@ const updateUserProfile = async (userId, profileData) => {
   ).select("-password -refreshToken -tokenVersion");
   return user;
 };
+
+const myProfile = async (userId) => {
+  const user = await User.findById(userId).select(
+    "-password -refreshToken -tokenVersion",
+  );
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const [chatCount, groupChatCount] = await Promise.all([
+    Chat.countDocuments({ participants: userId, type: "direct" }),
+    Chat.countDocuments({ participants: userId, type: "group" }),
+  ]);
+  return {
+    user: {
+      ...user._doc,
+      chatCount,
+      groupChatCount,
+    },
+  };
+};
 module.exports = {
   register,
   login,
@@ -136,4 +157,5 @@ module.exports = {
   logout,
   uploadUserAvatar,
   updateUserProfile,
+  myProfile,
 };

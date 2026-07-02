@@ -104,6 +104,8 @@ export default function GroupInfoModal({ isOpen, onClose, conversation }) {
                               alt={participant.username || participant.name || 'User'}
                               size="w-10 h-10"
                               rounded="rounded-full"
+                              userId={participant._id || participant.id}
+                              showStatus={true}
                             />
                             <div>
                               <div className="flex items-center gap-2">

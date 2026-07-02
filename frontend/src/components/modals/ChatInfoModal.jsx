@@ -4,10 +4,21 @@ import { X, User, Mail, Calendar, Phone, Trash2, Ban, Flag } from 'lucide-react'
 import Avatar from '../common/Avatar.jsx';
 import { useToast } from '../ToastContainer.jsx';
 import { clearChat, deleteChat } from '../../api/conversation.js';
+import { useSelector } from 'react-redux';
+import { useUserPresence } from '../../hooks/useUserPresence';
 
 export default function ChatInfoModal({ isOpen, onClose, conversation }) {
   if (!conversation) return null;
   const toast = useToast();
+  const { user: currentUser } = useSelector((state) => state.auth);
+
+  const getOtherParticipant = (conv) => {
+    if (!conv || !conv.participants || conv.type !== 'direct') return null;
+    return conv.participants.find(p => p._id !== currentUser?.id && p._id !== currentUser?._id) || conv.participants[0];
+  };
+
+  const otherParticipant = getOtherParticipant(conversation);
+  const { isOnline, lastSeenText } = useUserPresence(otherParticipant?._id || otherParticipant?.id);
 
   const handleClearChat = async () => {
     try {
@@ -75,12 +86,14 @@ export default function ChatInfoModal({ isOpen, onClose, conversation }) {
                   size="w-24 h-24"
                   rounded="rounded-full"
                   className="mb-4 shadow-elevation-2"
+                  userId={otherParticipant?._id || otherParticipant?.id}
+                  showStatus={true}
                 />
                 <h3 className="text-xl font-bold text-dark-text mb-1">
                   {conversation.name || conversation.username}
                 </h3>
-                <p className="text-sm text-primary mb-6">
-                  {conversation.status === 'online' ? 'Active now' : 'Offline'}
+                <p className={`text-sm mb-6 ${isOnline ? 'text-primary' : 'text-dark-text-muted font-medium'}`}>
+                  {lastSeenText}
                 </p>
 
                 <div className="w-full space-y-4">
