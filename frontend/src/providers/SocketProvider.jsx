@@ -14,7 +14,16 @@ import {
 } from '../store/slices/socketSlice';
 
 import socketService from '../services/socket.service';
-import { addMessage, updateChat, updateMessageStatus } from '../store/slices/chatSlice';
+import {
+  addMessage,
+  updateChat,
+  updateMessageStatus,
+  setTyping,
+  removeTyping,
+  clearChat,
+  deleteChat,
+  memberRemoved,
+} from '../store/slices/chatSlice';
 
 export default function SocketProvider({ children }) {
   const dispatch = useDispatch();
@@ -28,6 +37,22 @@ export default function SocketProvider({ children }) {
       Notification.requestPermission();
     }
   }, []);
+
+  // Helper function to show notification
+  const showNotification = (message) => {
+    console.log('notification message', message);
+    try {
+      new Notification(`New message from ${message?.senderId?.username}`, {
+        body: message.content,
+        icon: message.senderId.avatar || '/default-avatar.png',
+        tag: message.chatId, // Prevent duplicate notifications
+        requireInteraction: false,
+        silent: false,
+      });
+    } catch (error) {
+      console.error('Error showing notification:', error);
+    }
+  };
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -69,18 +94,20 @@ export default function SocketProvider({ children }) {
 
     socket.on('online_users', (users) => {
       console.log('received online users list', users);
-      
+
       dispatch(setOnlineUsers(users));
     });
 
     socket.on('user_status_changed', (data) => {
       console.log('user status changed', data);
-      
-      dispatch(updateUserStatus({
-        userId: data.userId,
-        status: data.status,
-        isOnline: data.isOnline
-      }));
+
+      dispatch(
+        updateUserStatus({
+          userId: data.userId,
+          status: data.status,
+          isOnline: data.isOnline,
+        })
+      );
     });
 
     socket.on('connect_error', (error) => {
@@ -89,36 +116,68 @@ export default function SocketProvider({ children }) {
       dispatch(setConnected(false));
     });
 
+    socket.on('user_typing', (data) => {
+      console.log('user is typing', data);
+      dispatch(setTyping(data));
+    });
+
+    socket.on('user_stopped_typing', (data) => {
+      console.log('user stopped typing', data);
+      dispatch(removeTyping(data));
+    });
+
+    socket.on('chat_cleared', (data) => {
+      console.log('chat cleared', data);
+      dispatch(clearChat(data._id));
+    });
+
+    socket.on('chat_deleted', (data) => {
+      console.log('chat deleted', data);
+      dispatch(deleteChat(data._id));
+    });
+
     socket.on('message_received', (message) => {
-      console.log('🔔 message_received frontend', message);
-      console.log('🔔 Current conversation ID:', currentConversationId);
-      console.log('🔔 Message chatId:', message.chatId);
-      
       // Add message to current conversation if active
-      dispatch(addMessage({
-        conversationId: message.chatId,
-        message: message
-      }));
-      
+      dispatch(
+        addMessage({
+          conversationId: message.chatId,
+          message: message,
+        })
+      );
+
       // Update chat list and unread count if message is from another user
       const currentUserId = user?._id || user?.id;
       if (currentUserId && message.senderId !== currentUserId) {
-        dispatch(updateChat({
-          chatId: message.chatId,
-          lastMessage: message,
-          currentUserId: currentUserId,
-        }));
+        dispatch(
+          updateChat({
+            chatId: message.chatId,
+            lastMessage: message,
+            currentUserId: currentUserId,
+          })
+        );
       }
-      
+
       // Show notification if not in active conversation
       if (message.chatId !== currentConversationId) {
-        // Show browser notification
+        console.log('Notification permission:', Notification.permission);
+        console.log('Should show notification - not in active conversation');
+
+        // Show notification if permission granted
         if (Notification.permission === 'granted') {
-          new Notification(`New message from ${message.sender.name}`, {
-            body: message.content,
-            icon: message.sender.avatar || '/default-avatar.png'
+          showNotification(message);
+        } else if (Notification.permission === 'denied') {
+          console.log('Notification permission denied');
+        } else {
+          console.log('Notification permission not granted, requesting...');
+          Notification.requestPermission().then((permission) => {
+            console.log('Permission result:', permission);
+            if (permission === 'granted') {
+              showNotification(message);
+            }
           });
         }
+      } else {
+        console.log('Not showing notification - user is in active conversation');
       }
     });
 
@@ -126,6 +185,10 @@ export default function SocketProvider({ children }) {
       console.log('chat_created', chat);
       // Refresh conversations list to include the new chat
       dispatch(fetchConversation());
+    });
+
+    socket.on('member_removed', (data) => {
+      dispatch(memberRemoved(data));
     });
 
     socket.on('chat_updated', (data) => {
@@ -146,36 +209,49 @@ export default function SocketProvider({ children }) {
 
     socket.on('message_delivered', (data) => {
       console.log('message_delivered', data);
-      dispatch(updateMessageStatus({
-        messageId: data.messageId,
-        status: 'delivered'
-      }));
+      dispatch(
+        updateMessageStatus({
+          messageId: data.messageId,
+          status: 'delivered',
+        })
+      );
     });
 
     socket.on('message_read', (data) => {
       console.log('message_read', data);
-      dispatch(updateMessageStatus({
-        messageId: data.messageId,
-        status: 'read',
-        readBy: data.readBy
-      }));
+      dispatch(
+        updateMessageStatus({
+          messageId: data.messageId,
+          status: 'read',
+          readBy: data.readBy,
+        })
+      );
     });
 
     socket.on('message_delivered', (data) => {
       console.log('message_delivered', data);
-      dispatch(updateMessageStatus({
-        messageId: data.messageId,
-        status: 'delivered',
-        deliveredTo: data.deliveredTo
-      }));
+      dispatch(
+        updateMessageStatus({
+          messageId: data.messageId,
+          status: 'delivered',
+          deliveredTo: data.deliveredTo,
+        })
+      );
     });
 
     socket.on('chat_read', (data) => {
       console.log('chat_read', data);
-      dispatch(updateChat({
-        chatId: data.chatId,
-        unreadCount: 0
-      }));
+      dispatch(
+        updateChat({
+          chatId: data.chatId,
+          unreadCount: 0,
+        })
+      );
+    });
+
+    socket.on('userAvatarUpdated', (user) => {
+      console.log('userAvatarUpdated', user);
+      dispatch(updateUser(user));
     });
 
     socket.on('error', (error) => {
@@ -194,10 +270,10 @@ export default function SocketProvider({ children }) {
           connected: socket.connected,
           id: socket.id,
           rooms: Array.from(socket.rooms || []),
-          userId: socket.userId
+          userId: socket.userId,
         });
       }
-    }, 10000); 
+    }, 10000);
 
     return () => {
       socketService.disconnect();
@@ -211,7 +287,7 @@ export default function SocketProvider({ children }) {
     if (currentConversationId) {
       console.log('🏠 Joining chat room:', currentConversationId);
       socketService.joinRoom(currentConversationId);
-      
+
       // Add debugging to confirm room join
       const socket = socketService.getSocket();
       if (socket) {

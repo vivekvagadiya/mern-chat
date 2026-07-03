@@ -10,8 +10,8 @@ export default function OnlineUsersList({ showTitle = true, maxVisible = 10 }) {
   const { user: currentUser } = useSelector((state) => state.auth);
 
   // Filter out current user from online users
-  const otherOnlineUsers = onlineUsers.filter(user => 
-    (user._id !== currentUser?._id && user.id !== currentUser?.id)
+  const otherOnlineUsers = onlineUsers.filter(
+    (user) => user._id !== currentUser?._id && user.id !== currentUser?.id
   );
 
   // Limit the number of visible users
@@ -39,7 +39,7 @@ export default function OnlineUsersList({ showTitle = true, maxVisible = 10 }) {
             const userId = user._id || user.id;
             const userStatus = getUserStatus(userId, userStatuses);
             const statusClass = getStatusIndicatorClass(userStatus);
-            
+
             return (
               <motion.div
                 key={userId}
@@ -50,12 +50,7 @@ export default function OnlineUsersList({ showTitle = true, maxVisible = 10 }) {
               >
                 {/* Avatar with status indicator */}
                 <div className="relative flex-shrink-0">
-                  <Avatar
-                    src={user.avatar}
-                    alt={user.name}
-                    fallback="👤"
-                    size="sm"
-                  />
+                  <Avatar src={user.avatar} alt={user.name} fallback="👤" size="sm" />
                   <div
                     className={`absolute bottom-0 right-0 w-2.5 h-2.5 ${statusClass} rounded-full border border-dark-surface`}
                     title={`${userStatus.charAt(0).toUpperCase() + userStatus.slice(1)}`}
@@ -64,11 +59,11 @@ export default function OnlineUsersList({ showTitle = true, maxVisible = 10 }) {
 
                 {/* User info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-dark-text truncate">
-                    {user.name}
-                  </p>
+                  <p className="text-sm font-medium text-dark-text truncate">{user.name}</p>
                   <p className="text-xs text-dark-text-muted">
-                    {userStatus === 'online' ? 'Active now' : `Last seen ${formatLastSeen(userStatuses[userId]?.lastSeen)}`}
+                    {userStatus === 'online'
+                      ? 'Active now'
+                      : `Last seen ${formatLastSeen(userStatuses[userId]?.lastSeen)}`}
                   </p>
                 </div>
 
@@ -99,7 +94,7 @@ export default function OnlineUsersList({ showTitle = true, maxVisible = 10 }) {
 export function CompactOnlineUsersList() {
   const { onlineUsers, userStatuses, connected } = useSelector((state) => state.socket);
   const { user: currentUser } = useSelector((state) => state.auth);
-  console.log('user',currentUser,onlineUsers)
+  console.log('user', currentUser, onlineUsers);
 
   if (!connected || onlineUsers.length === 0) {
     return null;
@@ -109,17 +104,15 @@ export function CompactOnlineUsersList() {
     <div className="px-4 py-2 border-t border-dark-border">
       <div className="flex items-center gap-2 mb-2">
         <Circle size={8} className="text-success fill-current" />
-        <span className="text-xs text-dark-text-muted">
-          {onlineUsers.length} online
-        </span>
+        <span className="text-xs text-dark-text-muted">{onlineUsers.length} online</span>
       </div>
-      
+
       <div className="flex -space-x-2">
         {onlineUsers.slice(0, 5).map((user) => {
           const userId = user._id || user.id;
           const userStatus = getUserStatus(userId, userStatuses);
           const statusClass = getStatusIndicatorClass(userStatus);
-          
+
           return (
             <div key={userId} className="relative">
               <Avatar
@@ -135,7 +128,7 @@ export function CompactOnlineUsersList() {
             </div>
           );
         })}
-        
+
         {onlineUsers.length > 5 && (
           <div className="flex items-center justify-center w-6 h-6 bg-dark-surface-alt border-2 border-dark-surface rounded-full text-xs text-dark-text-muted">
             +{onlineUsers.length - 5}

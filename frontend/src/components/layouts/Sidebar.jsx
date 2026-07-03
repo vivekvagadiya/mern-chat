@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Settings, Bell, Plus, Pin, Star, Archive, Menu } from 'lucide-react';
+import { Search, Settings, Bell, Plus, Pin, Star, Archive, Menu, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import ConversationItem from '../../components/chat/ConversationItem';
 import { CompactOnlineUsersList } from '../../components/chat/OnlineUsersList';
 import {
+  setCreateGroupToggle,
   setNotificationsOpen,
   setSearchOpen,
   setSettingsOpen,
@@ -15,12 +17,14 @@ import { useConversation } from '../../hooks/useConversation';
 
 export default function Sidebar() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState('all'); // all, pinned, favorites
-  const { conversations, loading, messages ,selectConversation} = useConversation();
+  const { conversations, loading, messages, selectConversation } = useConversation();
   console.log('conversations', conversations, messages);
   const { mobileView } = useSelector((state) => state.ui);
-  const {onlineUsers}=useSelector((state)=>state.socket);
-  console.log('onlineUsers',onlineUsers)
+  const { onlineUsers } = useSelector((state) => state.socket);
+  const { user } = useSelector((state) => state.auth);
+  console.log('onlineUsers', onlineUsers);
 
   const pinnedConversations = conversations.filter((c) => c.isPinned);
   const favoriteConversations = conversations.filter((c) => c.isFavorite);
@@ -138,35 +142,63 @@ export default function Sidebar() {
       <CompactOnlineUsersList />
 
       {/* Footer - Actions */}
-      <div className="p-4 border-t border-dark-border flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => dispatch(setNotificationsOpen(true))}
-            className="p-2 hover:bg-dark-surface-alt rounded-lg transition-colors relative"
-          >
-            <Bell size={20} />
-            <div className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
-          </motion.button>
+      <div className="p-4 border-t border-dark-border">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => dispatch(setNotificationsOpen(true))}
+              className="p-2 hover:bg-dark-surface-alt rounded-lg transition-colors relative"
+            >
+              <Bell size={20} />
+              <div className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => dispatch(setSettingsOpen(true))}
+              className="p-2 hover:bg-dark-surface-alt rounded-lg transition-colors"
+            >
+              <Settings size={20} />
+            </motion.button>
+          </div>
 
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => dispatch(setSettingsOpen(true))}
-            className="p-2 hover:bg-dark-surface-alt rounded-lg transition-colors"
+            className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+            onClick={() => dispatch(setCreateGroupToggle(true))}
           >
-            <Settings size={20} />
+            <Plus size={20} />
           </motion.button>
         </div>
 
+        {/* Profile Section */}
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
-          onClick={()=>dispatch(setSearchOpen(true))}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => navigate('/profile')}
+          className="w-full p-3 bg-dark-surface-alt hover:bg-dark-surface-2 rounded-lg transition-colors flex items-center gap-3 group"
         >
-          <Plus size={20} />
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg group-hover:from-primary/30 group-hover:to-accent/30 transition-colors">
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt="Profile"
+                className="w-full h-full rounded-full object-cover"
+              />
+            ) : (
+              <User size={20} className="text-primary" />
+            )}
+          </div>
+          <div className="flex-1 text-left">
+            <p className="text-sm font-medium text-dark-text truncate">
+              {user?.username || 'Your Profile'}
+            </p>
+            <p className="text-xs text-dark-text-muted">View Profile</p>
+          </div>
         </motion.button>
       </div>
     </div>

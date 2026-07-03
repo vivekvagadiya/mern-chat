@@ -3,6 +3,8 @@ const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const { generateTokens } = require("../utils/generateTokens.js");
 const bcrypt = require("bcrypt");
+const uploadToCloudinary = require("../utils/uploadToCloudinary.js");
+const Chat = require("../models/chat.model.js");
 
 const register = async (username, email, password) => {
   const existingUser = await User.findOne({
@@ -99,4 +101,61 @@ const logout = async (userId) => {
   return true;
 };
 
-module.exports = { register, login, refreshToken, logout };
+const uploadUserAvatar = async (userId, fileBuffer) => {
+  if (!fileBuffer) {
+    throw new Error("File buffer is required");
+  }
+
+  const result = await uploadToCloudinary(fileBuffer, "user-avatars");
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      avatar: result,
+    },
+    { new: true },
+  );
+
+  return user;
+};
+
+const updateUserProfile = async (userId, profileData) => {
+  const { username } = profileData;
+
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { username },
+    { new: true },
+  ).select("-password -refreshToken -tokenVersion");
+  return user;
+};
+
+const myProfile = async (userId) => {
+  const user = await User.findById(userId).select(
+    "-password -refreshToken -tokenVersion",
+  );
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const [chatCount, groupChatCount] = await Promise.all([
+    Chat.countDocuments({ participants: userId, type: "direct" }),
+    Chat.countDocuments({ participants: userId, type: "group" }),
+  ]);
+  return {
+    user: {
+      ...user._doc,
+      chatCount,
+      groupChatCount,
+    },
+  };
+};
+module.exports = {
+  register,
+  login,
+  refreshToken,
+  logout,
+  uploadUserAvatar,
+  updateUserProfile,
+  myProfile,
+};

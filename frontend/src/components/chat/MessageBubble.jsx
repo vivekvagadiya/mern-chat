@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Reply, Edit, Trash2, Smile, Check, CheckCheck } from 'lucide-react';
+import {
+  Copy,
+  Reply,
+  Edit,
+  Trash2,
+  Smile,
+  Check,
+  CheckCheck,
+  FileText,
+  Download,
+} from 'lucide-react';
 import { addReaction } from '../../store/slices/chatSlice.js';
 import { formatChatDate } from '../../utils/helper.js';
 import Avatar from '../common/Avatar.jsx';
+import { MessageAttachment } from './MessageAttachment.jsx';
+import EmojiPicker from 'emoji-picker-react';
 
 const EMOJI_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🎉', '🚀', '✨'];
 
@@ -74,7 +86,10 @@ export default function MessageBubble({ message }) {
             }`}
             whileHover={{ y: -2 }}
           >
-            <p className="text-sm leading-relaxed break-words max-w-xs">{message.content}</p>
+            <MessageAttachment message={message} />
+            {message.content && (
+              <p className="text-sm leading-relaxed break-words max-w-xs">{message.content}</p>
+            )}
 
             {/* Timestamp & Status */}
             <div
@@ -155,21 +170,15 @@ export default function MessageBubble({ message }) {
                 initial={{ opacity: 0, scale: 0.8, y: -10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                className={`absolute ${isOwn ? 'right-0' : 'left-0'} bottom-full mb-2 bg-dark-surface-2 border border-dark-border rounded-lg p-2 shadow-elevation-3 z-20`}
+                className={`absolute ${isOwn ? 'right-0' : 'left-0'} bottom-full mb-2 z-30 shadow-elevation-3 overflow-hidden rounded-lg`}
               >
-                <div className="grid grid-cols-4 gap-1">
-                  {EMOJI_REACTIONS.map((emoji) => (
-                    <motion.button
-                      key={emoji}
-                      whileHover={{ scale: 1.2 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => handleAddReaction(emoji)}
-                      className="w-8 h-8 rounded hover:bg-dark-surface flex items-center justify-center text-lg transition-colors"
-                    >
-                      {emoji}
-                    </motion.button>
-                  ))}
-                </div>
+                <EmojiPicker
+                  theme="dark"
+                  emojiStyle="native"
+                  onEmojiClick={(emojiObject) => {
+                    handleAddReaction(emojiObject.emoji);
+                  }}
+                />
               </motion.div>
             )}
           </AnimatePresence>

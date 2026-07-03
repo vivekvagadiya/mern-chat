@@ -13,6 +13,7 @@ const chatSlice = createSlice({
     currentConversationId: null,
     loading: false,
     error: null,
+    typingUsers: {},
   },
   reducers: {
     setCurrentConversation: (state, action) => {
@@ -23,16 +24,16 @@ const chatSlice = createSlice({
       if (!state.messages[conversationId]) {
         state.messages[conversationId] = [];
       }
-      
+
       const messageId = message._id || message.id;
       const exists = state.messages[conversationId].some(
-        (m) => (m._id === messageId || m.id === messageId)
+        (m) => m._id === messageId || m.id === messageId
       );
 
       if (!exists) {
         state.messages[conversationId].push(message);
       }
-      
+
       // Update conversation last message
       const conversation = state.conversations.find(
         (c) => c._id === conversationId || c.id === conversationId
@@ -43,19 +44,19 @@ const chatSlice = createSlice({
         conversation.unread = 0;
       }
     },
-    updateChat:(state,action)=>{
-      const {chatId,lastMessage,currentUserId}=action.payload;
-      const conversation=state.conversations.find((c)=>c._id===chatId || c.id===chatId )
-      if(conversation){
-        conversation.lastMessage=lastMessage;
-        conversation.updatedAt=lastMessage?.createdAt || new Date().toISOString();
-        
+    updateChat: (state, action) => {
+      const { chatId, lastMessage, currentUserId } = action.payload;
+      const conversation = state.conversations.find((c) => c._id === chatId || c.id === chatId);
+      if (conversation) {
+        conversation.lastMessage = lastMessage;
+        conversation.updatedAt = lastMessage?.createdAt || new Date().toISOString();
+
         // Only increment unread count if current user is not the sender
         if (currentUserId && lastMessage?.senderId !== currentUserId) {
           conversation.unread = (conversation.unread || 0) + 1;
         }
-        
-        state.conversations.sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt));
+
+        state.conversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
       } else {
         console.log('❌ Conversation not found for chatId:', chatId);
       }
@@ -93,7 +94,7 @@ const chatSlice = createSlice({
         if (!message.reactions) {
           message.reactions = [];
         }
-        const existingReaction = message.reactions.find(r => r.emoji === emoji);
+        const existingReaction = message.reactions.find((r) => r.emoji === emoji);
         if (existingReaction) {
           existingReaction.users += 1;
         } else {
@@ -101,53 +102,127 @@ const chatSlice = createSlice({
         }
       }
     },
+
+    clearChat: (state, action) => {
+      const chatId = action.payload;
+
+      if (state.messages[chatId]) {
+        state.messages[chatId] = [];
+      }
+      if (state.chatInfo[chatId]) {
+        state.chatInfo[chatId] = {};
+      }
+
+      const conversation = state.conversations.find((c) => c._id === chatId || c.id === chatId);
+      if (conversation) {
+        conversation.lastMessage = null;
+      }
+    },
+
+    deleteChat: (state, action) => {
+      const chatId = action.payload;
+
+      state.conversations = state.conversations.filter((c) => c._id !== chatId && c.id !== chatId);
+
+      if (state.messages[chatId]) {
+        delete state.messages[chatId];
+      }
+      if (state.chatInfo[chatId]) {
+        delete state.chatInfo[chatId];
+      }
+      if (state.pagination[chatId]) {
+        delete state.pagination[chatId];
+      }
+
+      if (state.currentConversationId === chatId) {
+        state.currentConversationId = null;
+      }
+    },
+
+    memberRemoved: (state, action) => {
+      const chatId = action.payload;
+      
+      state.conversations = state.conversations.filter((c) => c._id !== chatId && c.id !== chatId);
+
+      if (state.messages[chatId]) {
+        delete state.messages[chatId];
+      }
+      if (state.chatInfo[chatId]) {
+        delete state.chatInfo[chatId];
+      }
+      if (state.pagination[chatId]) {
+        delete state.pagination[chatId];
+      }
+
+      if (state.currentConversationId === chatId) {
+        state.currentConversationId = null;
+      }
+    },
+
     updateMessageStatus: (state, action) => {
       const { messageId, status, readBy, deliveredTo } = action.payload;
-      
+
       // Find and update message across all conversations
-      Object.values(state.messages).forEach(messages => {
-        const message = messages.find(m => m._id === messageId || m.id === messageId);
+      Object.values(state.messages).forEach((messages) => {
+        const message = messages.find((m) => m._id === messageId || m.id === messageId);
         if (message) {
           message.status = status;
-          
+
           // Handle read status
           if (readBy) {
             if (!message.readBy) {
               message.readBy = [];
             }
             // Check if user already in readBy
-            const existingReadIndex = message.readBy.findIndex(r => 
+            const existingReadIndex = message.readBy.findIndex((r) =>
               typeof r === 'object' ? r.userId === readBy : r === readBy
             );
             if (existingReadIndex === -1) {
               message.readBy.push({
                 userId: readBy,
-                readAt: new Date()
+                readAt: new Date(),
               });
             }
           }
-          
+
           // Handle delivery status
           if (deliveredTo) {
             if (!message.deliveredTo) {
               message.deliveredTo = [];
             }
             // Check if user already in deliveredTo
-            const existingDeliveredIndex = message.deliveredTo.findIndex(d => 
+            const existingDeliveredIndex = message.deliveredTo.findIndex((d) =>
               typeof d === 'object' ? d.userId === deliveredTo : d === deliveredTo
             );
             if (existingDeliveredIndex === -1) {
               message.deliveredTo.push({
                 userId: deliveredTo,
-                deliveredAt: new Date()
+                deliveredAt: new Date(),
               });
             }
           }
         }
       });
     },
+    setTyping: (state, action) => {
+      const { chatId, userId } = action.payload;
+      if (!state.typingUsers) state.typingUsers = {};
+      if (!state.typingUsers[chatId]) {
+        state.typingUsers[chatId] = [];
+      }
+      if (!state.typingUsers[chatId].includes(userId)) {
+        state.typingUsers[chatId].push(userId);
+      }
+    },
+    removeTyping: (state, action) => {
+      const { chatId, userId } = action.payload;
+      if (!state.typingUsers) state.typingUsers = {};
+      if (state.typingUsers[chatId]) {
+        state.typingUsers[chatId] = state.typingUsers[chatId].filter((id) => id !== userId);
+      }
+    },
   },
-  extraReducers:(builder)=>{
+  extraReducers: (builder) => {
     builder.addCase(fetchConversation.pending, (state) => {
       state.loading = true;
     });
@@ -176,18 +251,23 @@ const chatSlice = createSlice({
       state.messagesLoading = false;
       state.error = action.payload;
     });
-  }
+  },
 });
 
-export const { 
-  setCurrentConversation, 
-  addMessage, 
-  markConversationAsRead, 
-  togglePinned, 
+export const {
+  setCurrentConversation,
+  addMessage,
+  markConversationAsRead,
+  togglePinned,
   toggleFavorite,
   addReaction,
   updateChat,
-  updateMessageStatus
+  updateMessageStatus,
+  setTyping,
+  removeTyping,
+  clearChat,
+  deleteChat,
+  memberRemoved,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

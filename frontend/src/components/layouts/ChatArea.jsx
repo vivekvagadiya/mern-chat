@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Video, Info, Clock, Menu, Check, CheckCheck } from 'lucide-react';
@@ -9,14 +9,31 @@ import { setSidebarOpen } from '../../store/slices/uiSlice.js';
 import { markConversationAsRead } from '../../store/slices/chatSlice.js';
 import { useConversation } from '../../hooks/useConversation.js';
 import { formatChatDate, getTimeStamp } from '../../utils/helper.js';
+import Avatar from '../common/Avatar.jsx';
+import ChatInfoModal from '../modals/ChatInfoModal';
+import GroupInfoModal from '../modals/GroupInfoModal';
+import { useUserPresence } from '../../hooks/useUserPresence';
 
 export default function ChatArea() {
   const dispatch = useDispatch();
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const { mobileView } = useSelector((state) => state.ui);
+  const { user } = useSelector((state) => state.auth);
+  const { typingUsers } = useSelector((state) => state.chat);
   const { messages, currentConversation, pagination } = useConversation();
-  console.log('messages', messages);
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+
+  const currentTypingUserIds = typingUsers?.[currentConversation?._id] || [];
+  const otherTypingUserIds = currentTypingUserIds.filter((id) => id !== (user?._id || user?.id));
+
+  const getOtherParticipant = (conv) => {
+    if (!conv || !conv.participants || conv.type !== 'direct') return null;
+    return conv.participants.find(p => p._id !== user?.id && p._id !== user?._id) || conv.participants[0];
+  };
+
+  const otherParticipant = getOtherParticipant(currentConversation);
+  const { isOnline, lastSeenText } = useUserPresence(otherParticipant?._id || otherParticipant?.id);
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
@@ -50,7 +67,7 @@ export default function ChatArea() {
   }
 
   const conversationMemberCount =
-    currentConversation.type === 'group' ? currentConversation.memberCount : 1;
+    currentConversation.type === 'group' ? currentConversation.participants?.length || 0 : 1;
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-dark-surface via-dark-bg to-dark-surface-alt overflow-hidden">
@@ -67,18 +84,27 @@ export default function ChatArea() {
           )}
 
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg">
+            {/* <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg">
               {currentConversation.avatar}
-            </div>
+            </div> */}
+            <Avatar
+              src={currentConversation.avatar}
+              alt={currentConversation.username || ''}
+              size="w-10 h-10"
+              userId={otherParticipant?._id || otherParticipant?.id}
+              showStatus={currentConversation.type === 'direct'}
+            />
 
             <div>
               <h2 className="font-semibold text-dark-text">{currentConversation.name}</h2>
               <p className="text-xs text-dark-text-muted">
-                {currentConversation.type === 'group'
-                  ? `${conversationMemberCount} members`
-                  : currentConversation.status === 'online'
-                    ? 'Active now'
-                    : `Last seen ${new Date(currentConversation.createdAt).toLocaleTimeString()}`}
+                {otherTypingUserIds.length > 0 ? (
+                  <span className="text-primary font-medium italic animate-pulse">typing...</span>
+                ) : currentConversation.type === 'group' ? (
+                  `${conversationMemberCount} members`
+                ) : (
+                  lastSeenText
+                )}
               </p>
             </div>
           </div>
@@ -103,6 +129,7 @@ export default function ChatArea() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => setIsInfoModalOpen(true)}
             className="p-2 hover:bg-dark-surface-alt rounded-lg transition-colors text-dark-text-muted hover:text-dark-text"
           >
             <Info size={20} />
@@ -112,7 +139,10 @@ export default function ChatArea() {
 
       {/* Messages */}
       <div className="flex-1 relative overflow-hidden">
-        <div className="h-full overflow-y-auto px-4 py-4 space-y-4 scroll-smooth" ref={messagesContainerRef}>
+        <div
+          className="h-full overflow-y-auto px-4 py-4 space-y-4 scroll-smooth"
+          ref={messagesContainerRef}
+        >
           <AnimatePresence>
             {messages.length === 0 ? (
               <motion.div
@@ -155,6 +185,35 @@ export default function ChatArea() {
               })
             )}
           </AnimatePresence>
+
+          {/* Typing Indicator */}
+          {otherTypingUserIds.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex justify-start gap-3 mt-4"
+            >
+              <div className="bg-dark-surface-alt border border-glass-light rounded-lg rounded-bl-none px-4 py-3 w-fit flex items-center gap-1.5 backdrop-blur-sm">
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, ease: 'easeInOut' }}
+                  className="w-1.5 h-1.5 bg-dark-text-muted rounded-full"
+                />
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, delay: 0.2, ease: 'easeInOut' }}
+                  className="w-1.5 h-1.5 bg-dark-text-muted rounded-full"
+                />
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 0.6, repeat: Infinity, delay: 0.4, ease: 'easeInOut' }}
+                  className="w-1.5 h-1.5 bg-dark-text-muted rounded-full"
+                />
+              </div>
+            </motion.div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -163,6 +222,20 @@ export default function ChatArea() {
       <div className="p-4 border-t border-dark-border backdrop-blur-md bg-dark-surface/50">
         <MessageComposer conversationId={currentConversation?._id} />
       </div>
+      {/* Modals */}
+      {currentConversation?.type === 'group' ? (
+        <GroupInfoModal 
+          isOpen={isInfoModalOpen} 
+          onClose={() => setIsInfoModalOpen(false)} 
+          conversation={currentConversation} 
+        />
+      ) : (
+        <ChatInfoModal 
+          isOpen={isInfoModalOpen} 
+          onClose={() => setIsInfoModalOpen(false)} 
+          conversation={currentConversation} 
+        />
+      )}
     </div>
   );
 }

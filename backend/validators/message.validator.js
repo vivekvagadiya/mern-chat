@@ -33,12 +33,12 @@ const sendMessageSchema = z.object({
           return !!data.content?.trim();
         }
 
-        return !!data.mediaUrl;
+        return true; // We validate file existence or mediaUrl in the controller
       },
       {
         message: "Content is required for text messages",
         path: ["content"],
-      }
+      },
     ),
 });
 
@@ -51,13 +51,7 @@ const getMessagesSchema = z.object({
 
     page: z.coerce.number().int().positive().optional().default(1),
 
-    limit: z.coerce
-      .number()
-      .int()
-      .positive()
-      .max(100)
-      .optional()
-      .default(50),
+    limit: z.coerce.number().int().positive().max(100).optional().default(50),
   }),
 });
 

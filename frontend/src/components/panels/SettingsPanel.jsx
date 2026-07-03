@@ -1,16 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X,
-  Moon,
-  Sun,
-  Bell,
-  Lock,
-  Palette,
-  LogOut,
-  ChevronRight,
-} from 'lucide-react';
+import { X, Moon, Sun, Bell, Lock, Palette, LogOut, ChevronRight, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { setSettingsOpen } from '../../store/slices/uiSlice';
 import { useToast } from '../ToastContainer';
@@ -20,8 +11,8 @@ import { logout } from '../../store/slices/authSlice';
 export default function SettingsPanel() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const toast=useToast();
-  const { settingsOpen } = useSelector(state => state.ui);
+  const toast = useToast();
+  const { settingsOpen } = useSelector((state) => state.ui);
   const [activeSection, setActiveSection] = useState('general');
   const [settings, setSettings] = useState({
     theme: 'dark',
@@ -37,7 +28,7 @@ export default function SettingsPanel() {
     { id: 'privacy', label: 'Privacy & Safety', icon: Lock },
   ];
 
-  const handleLogout=async()=>{
+  const handleLogout = async () => {
     try {
       await logoutApi();
       toast.success('Logout successful!');
@@ -48,7 +39,7 @@ export default function SettingsPanel() {
     } catch (error) {
       toast.error(error.message || 'Failed to logout');
     }
-  }
+  };
 
   return (
     <AnimatePresence>
@@ -134,14 +125,12 @@ export default function SettingsPanel() {
                             </div>
                           </label>
                           <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-dark-surface-alt cursor-pointer transition-colors opacity-50">
-                            <input
-                              type="radio"
-                              disabled
-                              className="w-4 h-4 accent-primary"
-                            />
+                            <input type="radio" disabled className="w-4 h-4 accent-primary" />
                             <div className="flex items-center gap-2">
                               <Sun size={16} />
-                              <span className="text-sm text-dark-text">Light Mode (Coming Soon)</span>
+                              <span className="text-sm text-dark-text">
+                                Light Mode (Coming Soon)
+                              </span>
                             </div>
                           </label>
                         </div>
@@ -159,18 +148,24 @@ export default function SettingsPanel() {
 
                   {activeSection === 'notifications' && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-bold text-dark-text mb-4">Notification Settings</h3>
+                      <h3 className="text-sm font-bold text-dark-text mb-4">
+                        Notification Settings
+                      </h3>
 
                       <div className="space-y-3">
                         <div className="flex items-center justify-between p-3 bg-dark-surface-alt rounded-lg">
                           <div>
                             <p className="text-sm font-medium text-dark-text">Push Notifications</p>
-                            <p className="text-xs text-dark-text-muted mt-1">Receive in-app notifications</p>
+                            <p className="text-xs text-dark-text-muted mt-1">
+                              Receive in-app notifications
+                            </p>
                           </div>
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => setSettings({ ...settings, notifications: !settings.notifications })}
+                            onClick={() =>
+                              setSettings({ ...settings, notifications: !settings.notifications })
+                            }
                             className={`relative w-10 h-6 rounded-full transition-colors ${
                               settings.notifications ? 'bg-primary' : 'bg-dark-surface-2'
                             }`}
@@ -184,22 +179,26 @@ export default function SettingsPanel() {
 
                         <div className="flex items-center justify-between p-3 bg-dark-surface-alt rounded-lg opacity-50">
                           <div>
-                            <p className="text-sm font-medium text-dark-text">Email Notifications</p>
-                            <p className="text-xs text-dark-text-muted mt-1">Receive email digests</p>
+                            <p className="text-sm font-medium text-dark-text">
+                              Email Notifications
+                            </p>
+                            <p className="text-xs text-dark-text-muted mt-1">
+                              Receive email digests
+                            </p>
                           </div>
                           <motion.button
                             disabled
                             className="relative w-10 h-6 rounded-full bg-dark-surface-2"
                           >
-                            <motion.div
-                              className="absolute top-1 left-1 w-4 h-4 rounded-full bg-white"
-                            />
+                            <motion.div className="absolute top-1 left-1 w-4 h-4 rounded-full bg-white" />
                           </motion.button>
                         </div>
                       </div>
 
                       <div className="pt-4 border-t border-dark-border">
-                        <h4 className="text-xs font-bold text-dark-text-muted uppercase mb-3">Notification Types</h4>
+                        <h4 className="text-xs font-bold text-dark-text-muted uppercase mb-3">
+                          Notification Types
+                        </h4>
                         <div className="space-y-2">
                           {[
                             'Direct messages',
@@ -207,7 +206,10 @@ export default function SettingsPanel() {
                             'Reactions',
                             'Friend requests',
                           ].map((type) => (
-                            <label key={type} className="flex items-center gap-3 p-2 hover:bg-dark-surface-alt rounded transition-colors cursor-pointer">
+                            <label
+                              key={type}
+                              className="flex items-center gap-3 p-2 hover:bg-dark-surface-alt rounded transition-colors cursor-pointer"
+                            >
                               <input
                                 type="checkbox"
                                 defaultChecked
@@ -232,7 +234,9 @@ export default function SettingsPanel() {
                           </label>
                           <select
                             value={settings.privateMessages}
-                            onChange={(e) => setSettings({ ...settings, privateMessages: e.target.value })}
+                            onChange={(e) =>
+                              setSettings({ ...settings, privateMessages: e.target.value })
+                            }
                             className="w-full px-3 py-2 bg-dark-surface-alt border border-dark-border rounded-lg text-sm text-dark-text outline-none focus:border-primary/50"
                           >
                             <option value="everyone">Everyone</option>
@@ -247,7 +251,9 @@ export default function SettingsPanel() {
                           </label>
                           <select
                             value={settings.onlineStatus}
-                            onChange={(e) => setSettings({ ...settings, onlineStatus: e.target.value })}
+                            onChange={(e) =>
+                              setSettings({ ...settings, onlineStatus: e.target.value })
+                            }
                             className="w-full px-3 py-2 bg-dark-surface-alt border border-dark-border rounded-lg text-sm text-dark-text outline-none focus:border-primary/50"
                           >
                             <option value="everyone">Everyone</option>
@@ -258,7 +264,9 @@ export default function SettingsPanel() {
                       </div>
 
                       <div className="pt-4 border-t border-dark-border">
-                        <h4 className="text-xs font-bold text-dark-text-muted uppercase mb-3">Account</h4>
+                        <h4 className="text-xs font-bold text-dark-text-muted uppercase mb-3">
+                          Account
+                        </h4>
                         <motion.button
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}

@@ -6,8 +6,8 @@ import { setUserProfileOpen } from '../../store/slices/uiSlice';
 
 export default function UserProfilePanel() {
   const dispatch = useDispatch();
-  const { userProfileOpen } = useSelector(state => state.ui);
-  const selectedUser = useSelector(state => state.users.selectedUser);
+  const { userProfileOpen } = useSelector((state) => state.ui);
+  const selectedUser = useSelector((state) => state.users.selectedUser);
 
   // Mock user profile
   const user = selectedUser || {
@@ -139,7 +139,10 @@ export default function UserProfilePanel() {
                         <p className="text-xs text-dark-text-muted">Email</p>
                         <p className="text-sm text-dark-text font-medium">{user.email}</p>
                       </div>
-                      <Copy size={14} className="text-dark-text-muted group-hover:text-dark-text transition-colors" />
+                      <Copy
+                        size={14}
+                        className="text-dark-text-muted group-hover:text-dark-text transition-colors"
+                      />
                     </div>
                     <div className="flex items-center justify-between p-3 bg-dark-surface-alt rounded-lg group cursor-pointer hover:bg-dark-surface-2 transition-colors">
                       <div className="flex items-center gap-2">
@@ -177,7 +180,10 @@ export default function UserProfilePanel() {
                       { label: 'Media', value: user.sharedMedia },
                       { label: 'Links', value: user.sharedLinks },
                     ].map((stat) => (
-                      <div key={stat.label} className="p-3 bg-dark-surface-alt rounded-lg text-center">
+                      <div
+                        key={stat.label}
+                        className="p-3 bg-dark-surface-alt rounded-lg text-center"
+                      >
                         <p className="text-lg font-bold text-primary">{stat.value}</p>
                         <p className="text-xs text-dark-text-muted mt-1">{stat.label}</p>
                       </div>
