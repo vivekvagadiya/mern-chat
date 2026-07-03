@@ -22,6 +22,7 @@ import {
   removeTyping,
   clearChat,
   deleteChat,
+  memberRemoved,
 } from '../store/slices/chatSlice';
 
 export default function SocketProvider({ children }) {
@@ -136,10 +137,6 @@ export default function SocketProvider({ children }) {
     });
 
     socket.on('message_received', (message) => {
-      console.log('🔔 message_received frontend', message);
-      console.log('🔔 Current conversation ID:', currentConversationId);
-      console.log('🔔 Message chatId:', message.chatId);
-
       // Add message to current conversation if active
       dispatch(
         addMessage({
@@ -188,6 +185,10 @@ export default function SocketProvider({ children }) {
       console.log('chat_created', chat);
       // Refresh conversations list to include the new chat
       dispatch(fetchConversation());
+    });
+
+    socket.on('member_removed', (data) => {
+      dispatch(memberRemoved(data));
     });
 
     socket.on('chat_updated', (data) => {

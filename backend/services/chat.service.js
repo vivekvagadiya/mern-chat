@@ -463,7 +463,10 @@ const clearChat = async (userId, chatId) => {
 };
 
 const deleteConversation = async (userId, chatId) => {
-  const chat = await Chat.findById(chatId).populate("participants", "username avatar");
+  const chat = await Chat.findById(chatId).populate(
+    "participants",
+    "username avatar",
+  );
   if (!chat) {
     throw new Error("chat not found");
   }
@@ -475,6 +478,43 @@ const deleteConversation = async (userId, chatId) => {
 
   await Chat.findByIdAndDelete(chatId);
 
+  return chat;
+};
+
+const getGroupChatInfo = async (userId, chatId) => {
+  const chat = await Chat.findOne({ _id: chatId, type: "group" })
+    .populate("participants", "username avatar email")
+    .populate("admins", "username avatar email")
+    .populate("createdBy", "username avatar email")
+    .lean();
+
+  if (!chat) {
+    throw new Error("chat not found");
+  }
+
+  if (!isParticipant(chat, userId)) {
+    throw new Error("Access denied: Not a participant");
+  }
+
+  const membersMap = new Map();
+  [...chat.admins, ...chat.participants].forEach((user) => {
+    membersMap.set(user._id.toString(), {
+      ...user,
+      isAdmin: chat.admins.some(
+        (admin) => admin._id.toString() === user._id.toString(),
+      ),
+      isCreator: chat.createdBy._id.toString() === user._id.toString(),
+    });
+  });
+  const currentUserInfo = membersMap.get(userId.toString());
+  chat.isCurrentUserAdmin = currentUserInfo ? currentUserInfo.isAdmin : false;
+  chat.isCurrentUserCreator = currentUserInfo ? currentUserInfo.isCreator : false;
+
+  chat.members = [...membersMap.values()].filter(
+    (member) => member._id.toString() !== userId.toString(),
+  );
+  delete chat.admins;
+  delete chat.participants;
   return chat;
 };
 
@@ -492,4 +532,5 @@ module.exports = {
   searchConversation,
   clearChat,
   deleteConversation,
+  getGroupChatInfo,
 };
