@@ -151,7 +151,7 @@ export default function GroupInfoModal({ isOpen, onClose, conversation }) {
       toast.success(response.message || 'Member removed successfully');
       setOpenMenuId(null);
       fetchInfo();
-      dispatch(fetchConversation());
+      // dispatch(fetchConversation());
     } catch (error) {
       toast.error(error.message || 'Failed to remove member');
     }

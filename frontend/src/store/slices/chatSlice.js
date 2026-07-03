@@ -141,7 +141,7 @@ const chatSlice = createSlice({
 
     memberRemoved: (state, action) => {
       const chatId = action.payload;
-      
+
       state.conversations = state.conversations.filter((c) => c._id !== chatId && c.id !== chatId);
 
       if (state.messages[chatId]) {
@@ -221,6 +221,20 @@ const chatSlice = createSlice({
         state.typingUsers[chatId] = state.typingUsers[chatId].filter((id) => id !== userId);
       }
     },
+
+    chatCreated: (state, action) => {
+      const chat = action.payload;
+
+      const existingChatIndex = state.conversations.findIndex(
+        (c) => c._id === chat._id || c.id === chat.id
+      );
+
+      if (existingChatIndex === -1) {
+        state.conversations.unshift(chat);
+      } else {
+        state.conversations[existingChatIndex] = chat;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchConversation.pending, (state) => {
@@ -268,6 +282,7 @@ export const {
   clearChat,
   deleteChat,
   memberRemoved,
+  chatCreated,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

@@ -13,6 +13,7 @@ const {
   clearChat,
   deleteConversation,
   getGroupChatInfo,
+  getFormattedChatById,
 } = require("../services/chat.service");
 const socketManager = require("../socket/roomManager");
 const apiResponse = require("../utils/apiResponse");
@@ -30,12 +31,13 @@ const createDirectChatController = async (req, res) => {
       // Notify both participants about the new chat
       const participants = [userId, participantId];
 
-      participants.forEach((participantId) => {
-        const userSocketId = socketManager.getUserSocketId(participantId);
+      for (const pId of participants) {
+        const userSocketId = socketManager.getUserSocketId(pId);
         if (userSocketId) {
-          io.to(userSocketId).emit("chat_created", chat);
+          const formattedChat = await getFormattedChatById(chat._id, pId);
+          io.to(userSocketId).emit("chat_created", formattedChat);
         }
-      });
+      }
     }
 
     return apiResponse.success(res, "Direct chat created successfully", chat);
@@ -133,7 +135,9 @@ const removeMembersFromGroupController = async (req, res) => {
       // 2. Notify the remaining members so their sidebars and info are synchronized
       const remainingParticipants = chat.participants;
       remainingParticipants.forEach((participant) => {
-        const userSocketId = socketManager.getUserSocketId(participant.toString());
+        const userSocketId = socketManager.getUserSocketId(
+          participant.toString(),
+        );
         if (userSocketId) {
           io.to(userSocketId).emit("chat_created", chat);
         }
@@ -156,7 +160,9 @@ const leaveGroupChatController = async (req, res) => {
       // Notify remaining participants
       const remainingParticipants = chat.participants;
       remainingParticipants.forEach((participant) => {
-        const userSocketId = socketManager.getUserSocketId(participant.toString());
+        const userSocketId = socketManager.getUserSocketId(
+          participant.toString(),
+        );
         if (userSocketId) {
           io.to(userSocketId).emit("chat_created", chat);
         }
@@ -180,7 +186,9 @@ const updateGroupChatController = async (req, res) => {
       // Notify all participants about group details update
       const participants = chat.participants;
       participants.forEach((participant) => {
-        const userSocketId = socketManager.getUserSocketId(participant.toString());
+        const userSocketId = socketManager.getUserSocketId(
+          participant.toString(),
+        );
         if (userSocketId) {
           io.to(userSocketId).emit("chat_created", chat);
         }
@@ -204,7 +212,9 @@ const assignAdminRoleController = async (req, res) => {
       // Notify all participants about role update
       const participants = chat.participants;
       participants.forEach((participant) => {
-        const userSocketId = socketManager.getUserSocketId(participant._id ? participant._id.toString() : participant.toString());
+        const userSocketId = socketManager.getUserSocketId(
+          participant._id ? participant._id.toString() : participant.toString(),
+        );
         if (userSocketId) {
           io.to(userSocketId).emit("chat_created", chat);
         }
@@ -228,7 +238,9 @@ const revokeAdminRoleController = async (req, res) => {
       // Notify all participants about role update
       const participants = chat.participants;
       participants.forEach((participant) => {
-        const userSocketId = socketManager.getUserSocketId(participant.toString());
+        const userSocketId = socketManager.getUserSocketId(
+          participant.toString(),
+        );
         if (userSocketId) {
           io.to(userSocketId).emit("chat_created", chat);
         }

@@ -18,6 +18,57 @@ const isParticipant = (chat, userId) => {
   });
 };
 
+const formatChat = (chat, userId) => {
+  if (!chat) return null;
+
+  // Convert mongoose document to plain object if needed
+  const chatObj = chat.toObject ? chat.toObject() : JSON.parse(JSON.stringify(chat));
+
+  // 1-1 chat handling
+  if (
+    chatObj.type === "direct" &&
+    chatObj.participants &&
+    chatObj.participants.length === 2
+  ) {
+    const otherParticipant = chatObj.participants.find(
+      (p) => (p._id || p).toString() !== userId.toString(),
+    );
+
+    if (otherParticipant) {
+      chatObj.avatar = otherParticipant.avatar;
+      chatObj.name = otherParticipant.username;
+    }
+  }
+
+  // last message formatting
+  if (chatObj.lastMessage) {
+    chatObj.lastMessagePreview = {
+      content: chatObj.lastMessage.content,
+      senderName: chatObj.lastMessage.senderId?.username || "Unknown",
+      timestamp: chatObj.lastMessage.createdAt,
+    };
+  }
+
+  return chatObj;
+};
+
+const getFormattedChatById = async (chatId, userId) => {
+  const chat = await Chat.findById(chatId)
+    .select("-__v")
+    .populate("participants", "username avatar")
+    .populate({
+      path: "lastMessage",
+      select: "content senderId createdAt",
+      populate: {
+        path: "senderId",
+        select: "username avatar",
+      },
+    });
+
+  if (!chat) return null;
+  return formatChat(chat, userId);
+};
+
 const createDirectChat = async (userId, participantId) => {
   if (userId.toString() === participantId.toString()) {
     throw new Error("Cannot create direct chat with yourself");
@@ -41,10 +92,7 @@ const createDirectChat = async (userId, participantId) => {
     createdBy: userId,
   });
 
-  return await Chat.findById(chat._id).populate(
-    "participants",
-    "username avatar",
-  );
+  return await getChatById(chat._id, userId);
 };
 
 const getUserChats = async (userId) => {
@@ -65,40 +113,7 @@ const getUserChats = async (userId) => {
     .sort({ updatedAt: -1 })
     .lean(); // Return plain JS objects
 
-  return chats.map((chat) => {
-    const processedChat = { ...chat };
-
-    // 1-1 chat handling
-    if (
-      chat.type === "direct" &&
-      chat.participants &&
-      chat.participants.length === 2
-    ) {
-      const otherParticipant = chat.participants.find(
-        (p) => p._id.toString() !== userId,
-      );
-
-      if (otherParticipant) {
-        processedChat.avatar = otherParticipant.avatar;
-        processedChat.name = otherParticipant.username;
-      }
-    }
-    // group chat handling
-    else if (chat.type === "group") {
-      // processedChat.displayName = chat.name;
-    }
-
-    // last message formatting
-    if (chat.lastMessage) {
-      processedChat.lastMessagePreview = {
-        content: chat.lastMessage.content,
-        senderName: chat.lastMessage.senderId?.username || "Unknown",
-        timestamp: chat.lastMessage.createdAt,
-      };
-    }
-
-    return processedChat;
-  });
+  return chats.map((chat) => formatChat(chat, userId));
 };
 
 const getChatById = async (chatId, userId = null) => {
@@ -107,6 +122,7 @@ const getChatById = async (chatId, userId = null) => {
     .populate("participants", "username avatar")
     .populate({
       path: "lastMessage",
+      select: "content senderId createdAt",
       populate: {
         path: "senderId",
         select: "username avatar",
@@ -118,8 +134,11 @@ const getChatById = async (chatId, userId = null) => {
   }
 
   // If userId is provided, check if user is a participant
-  if (userId && !isParticipant(chat, userId)) {
-    throw new Error("Access denied: Not a participant");
+  if (userId) {
+    if (!isParticipant(chat, userId)) {
+      throw new Error("Access denied: Not a participant");
+    }
+    return formatChat(chat, userId);
   }
 
   return chat;
@@ -143,9 +162,7 @@ const createGroupChat = async (userId, name, participantIds) => {
     createdBy: userId,
   });
 
-  return await Chat.findById(chat._id)
-    .select("-__v")
-    .populate("participants", "username avatar");
+  return await getChatById(chat._id, userId);
 };
 
 const addMembersToGroupChat = async (userId, chatId, newMemberIds) => {
@@ -234,7 +251,7 @@ const removeMembersFromGroupChat = async (userId, chatId, memberIds) => {
 
   await chat.save();
 
-  return chat;
+  return await getChatById(chatId, userId);
 };
 
 const leaveGroupChat = async (userId, chatId) => {
@@ -314,7 +331,7 @@ const updateGroupChat = async (userId, chatId, payload) => {
 
   await chat.save();
 
-  return chat;
+  return await getChatById(chatId, userId);
 };
 
 const assignAdminRole = async (userId, chatId, memberId) => {
@@ -346,7 +363,7 @@ const assignAdminRole = async (userId, chatId, memberId) => {
     },
   });
 
-  return getChatById(chatId);
+  return await getChatById(chatId, userId);
 };
 
 const revokeAdminRole = async (userId, chatId, memberId) => {
@@ -382,7 +399,7 @@ const revokeAdminRole = async (userId, chatId, memberId) => {
 
   await chat.save();
 
-  return chat;
+  return await getChatById(chatId, userId);
 };
 
 const searchConversation = async (userId, query) => {
@@ -533,4 +550,5 @@ module.exports = {
   clearChat,
   deleteConversation,
   getGroupChatInfo,
+  getFormattedChatById,
 };

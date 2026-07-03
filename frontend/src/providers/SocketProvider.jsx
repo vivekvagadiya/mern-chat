@@ -23,6 +23,7 @@ import {
   clearChat,
   deleteChat,
   memberRemoved,
+  chatCreated,
 } from '../store/slices/chatSlice';
 
 export default function SocketProvider({ children }) {
@@ -184,7 +185,7 @@ export default function SocketProvider({ children }) {
     socket.on('chat_created', (chat) => {
       console.log('chat_created', chat);
       // Refresh conversations list to include the new chat
-      dispatch(fetchConversation());
+      dispatch(chatCreated(chat));
     });
 
     socket.on('member_removed', (data) => {
