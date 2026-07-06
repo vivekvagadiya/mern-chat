@@ -14,6 +14,7 @@ const chatSlice = createSlice({
     loading: false,
     error: null,
     typingUsers: {},
+    conversationsFetched: false,
   },
   reducers: {
     setCurrentConversation: (state, action) => {
@@ -243,10 +244,24 @@ const chatSlice = createSlice({
     builder.addCase(fetchConversation.fulfilled, (state, action) => {
       state.loading = false;
       state.conversations = action.payload;
+      state.conversationsFetched = true;
     });
     builder.addCase(fetchConversation.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload;
+      state.conversationsFetched = false;
+    });
+    builder.addCase('auth/logout', (state) => {
+      state.conversations = [];
+      state.messages = {};
+      state.chatInfo = {};
+      state.pagination = {};
+      state.messagesLoading = false;
+      state.currentConversationId = null;
+      state.loading = false;
+      state.error = null;
+      state.typingUsers = {};
+      state.conversationsFetched = false;
     });
     builder.addCase(fetchMessages.pending, (state) => {
       state.messagesLoading = true;

@@ -43,13 +43,14 @@ export default function ChatArea() {
   const isInitialLoadRef = useRef(true);
   const isFetchingMoreRef = useRef(false);
 
-  // Reset scroll state on chat switch
+  // Reset scroll state on chat switch and fetch messages
   useEffect(() => {
     isInitialLoadRef.current = true;
     isFetchingMoreRef.current = false;
     prevScrollHeightRef.current = 0;
     prevScrollTopRef.current = 0;
-    if (currentConversation) {
+    if (currentConversation?._id) {
+      dispatch(fetchMessages({ chatId: currentConversation._id }));
       dispatch(markConversationAsRead(currentConversation._id));
     }
   }, [currentConversation?._id, dispatch]);
