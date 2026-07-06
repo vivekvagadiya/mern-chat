@@ -8,6 +8,7 @@ export const fetchMessages = createAsyncThunk(
       const response = await getMessages(params);
       return {
         chatId: params.chatId,
+        before: params.before,
         messages: response.messages,
         chatInfo: response.chatInfo,
         pagination: response.pagination,

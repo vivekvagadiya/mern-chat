@@ -68,11 +68,11 @@ const sendMessageController = async (req, res) => {
 const getMessagesController = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { chatId, page, limit } = req.query;
+    const { chatId, before, limit } = req.query;
     const messages = await messageService.getMessages(
       chatId,
       userId,
-      page,
+      before,
       limit,
     );
     return apiResponse.success(res, "Messages fetched successfully", messages);

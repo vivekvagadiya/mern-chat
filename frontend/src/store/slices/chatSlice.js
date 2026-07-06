@@ -253,9 +253,24 @@ const chatSlice = createSlice({
     });
     builder.addCase(fetchMessages.fulfilled, (state, action) => {
       state.messagesLoading = false;
-      const { chatId, messages, chatInfo, pagination } = action.payload;
-      // Store messages by chatId
-      state.messages[chatId] = messages;
+      const { chatId, messages, chatInfo, pagination, before } = action.payload;
+      
+      if (before) {
+        // Fetching older messages, prepend them to current messages
+        const existingMessages = state.messages[chatId] || [];
+        
+        // Prevent duplicate messages if any are already present (e.g. from Socket.IO or overlap)
+        const existingIds = new Set(existingMessages.map((m) => m._id || m.id));
+        const filteredNewMessages = (messages || []).filter(
+          (m) => !existingIds.has(m._id || m.id)
+        );
+        
+        state.messages[chatId] = [...filteredNewMessages, ...existingMessages];
+      } else {
+        // Initial fetch, replace messages
+        state.messages[chatId] = messages || [];
+      }
+      
       // Store chat info by chatId
       state.chatInfo[chatId] = chatInfo;
       // Store pagination info by chatId

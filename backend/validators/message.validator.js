@@ -49,9 +49,11 @@ const getMessagesSchema = z.object({
   query: z.object({
     chatId: objectIdSchema,
 
-    page: z.coerce.number().int().positive().optional().default(1),
+    before: z.string().refine((id) => mongoose.Types.ObjectId.isValid(id), {
+      message: "Invalid before cursor",
+    }).optional(),
 
-    limit: z.coerce.number().int().positive().max(100).optional().default(50),
+    limit: z.coerce.number().int().positive().max(100).optional().default(20),
   }),
 });
 

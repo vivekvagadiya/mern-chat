@@ -56,8 +56,8 @@ const messageSchema = new Schema(
   },
 );
 
-// Index to efficiently query messages for a specific chat, sorted by creation time.
-// This is crucial for fetching chat history.
-messageSchema.index({ chatId: 1, createdAt: -1 });
+// Index to efficiently query messages for a specific chat, sorted by ObjectId.
+// This is crucial for fast cursor-based pagination and fetching chat history.
+messageSchema.index({ chatId: 1, _id: -1 });
 
 module.exports = mongoose.model("Message", messageSchema);
