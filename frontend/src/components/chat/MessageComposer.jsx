@@ -309,6 +309,7 @@ export default function MessageComposer({ conversationId }) {
             setMessage(e.target.value);
             setIsTyping(e.target.value.length > 0);
           }}
+          disabled={isSending}
           onKeyDown={handleKeyDown}
           placeholder="Type a message... (Shift+Enter for new line)"
           className="flex-1 bg-transparent text-sm text-dark-text placeholder-dark-text-muted resize-none outline-none max-h-30 min-h-10"

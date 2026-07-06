@@ -7,7 +7,11 @@ import { setSearchOpen } from '../../store/slices/uiSlice.js';
 import { setCurrentConversation } from '../../store/slices/chatSlice.js';
 import { useDebounce } from '../../hooks/useDebounce.js';
 import { useToast } from '../ToastContainer.jsx';
-import { createDirectConversation, getConversation, searchConversation } from '../../api/conversation.js';
+import {
+  createDirectConversation,
+  getConversation,
+  searchConversation,
+} from '../../api/conversation.js';
 import { fetchConversation } from '../../store/actions/conversation.actions.js';
 
 export default function SearchModal() {
@@ -65,9 +69,9 @@ export default function SearchModal() {
     } else {
       try {
         const response = await createDirectConversation({ participantId: result._id });
-        console.log('response',response)
+        console.log('response', response);
         // Wait a moment for socket event to refresh conversations
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
         dispatch(setCurrentConversation(response._id));
         dispatch(setSearchOpen(false));
       } catch (error) {
@@ -207,7 +211,7 @@ export default function SearchModal() {
                     )}
 
                     {/* Messages Section */}
-                    {filteredResults.some((r) => r.type === 'message') && (
+                    {/* {filteredResults.some((r) => r.type === 'message') && (
                       <>
                         <div className="px-4 py-2 text-xs font-medium text-dark-text-muted bg-dark-surface-2">
                           Messages
@@ -227,7 +231,7 @@ export default function SearchModal() {
                             </motion.div>
                           ))}
                       </>
-                    )}
+                    )} */}
                   </div>
                 )}
               </div>
