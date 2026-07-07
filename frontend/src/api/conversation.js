@@ -67,7 +67,9 @@ export const getGroupChatInfo = async (chatId) => {
 
 export const addMembersToGroupChat = async (chatId, memberIds) => {
   try {
-    const response = await axiosInstance.post(`chat/add-members-to-group-chat/${chatId}`, { memberIds });
+    const response = await axiosInstance.post(`chat/add-members-to-group-chat/${chatId}`, {
+      memberIds,
+    });
     return response?.data?.data;
   } catch (error) {
     throw error?.errors?.[0] || error;
@@ -76,7 +78,9 @@ export const addMembersToGroupChat = async (chatId, memberIds) => {
 
 export const removeMembersFromGroup = async (chatId, memberIds) => {
   try {
-    const response = await axiosInstance.post(`chat/remove-members-from-group/${chatId}`, { memberIds });
+    const response = await axiosInstance.post(`chat/remove-members-from-group/${chatId}`, {
+      memberIds,
+    });
     return response?.data?.data;
   } catch (error) {
     throw error?.errors?.[0] || error;
@@ -119,3 +123,11 @@ export const updateGroupChat = async (chatId, data) => {
   }
 };
 
+export const deleteGroup = async (chatId) => {
+  try {
+    const response = await axiosInstance.delete(`chat/delete-group/${chatId}`);
+    return response?.data?.data;
+  } catch (error) {
+    throw error?.errors?.[0] || error;
+  }
+};

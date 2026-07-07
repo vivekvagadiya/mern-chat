@@ -22,7 +22,9 @@ const formatChat = (chat, userId) => {
   if (!chat) return null;
 
   // Convert mongoose document to plain object if needed
-  const chatObj = chat.toObject ? chat.toObject() : JSON.parse(JSON.stringify(chat));
+  const chatObj = chat.toObject
+    ? chat.toObject()
+    : JSON.parse(JSON.stringify(chat));
 
   // 1-1 chat handling
   if (
@@ -525,7 +527,9 @@ const getGroupChatInfo = async (userId, chatId) => {
   });
   const currentUserInfo = membersMap.get(userId.toString());
   chat.isCurrentUserAdmin = currentUserInfo ? currentUserInfo.isAdmin : false;
-  chat.isCurrentUserCreator = currentUserInfo ? currentUserInfo.isCreator : false;
+  chat.isCurrentUserCreator = currentUserInfo
+    ? currentUserInfo.isCreator
+    : false;
 
   chat.members = [...membersMap.values()].filter(
     (member) => member._id.toString() !== userId.toString(),
@@ -535,6 +539,25 @@ const getGroupChatInfo = async (userId, chatId) => {
   return chat;
 };
 
+const deleteGroup = async (userId, chatId) => {
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    throw new Error("Chat not found");
+  }
+  if (!isParticipant(chat, userId)) {
+    throw new Error("Access denied: Not a participant");
+  }
+  if (chat.type !== "group") {
+    throw new Error("Not a group chat");
+  }
+  if (!isAdmin(chat, userId)) {
+    throw new Error("Only admins can delete group");
+  }
+  const participants = chat.participants;
+  await Message.deleteMany({ chatId: chatId });
+  await Chat.findByIdAndDelete(chatId);
+  return { chat, participants };
+};
 module.exports = {
   createDirectChat,
   createGroupChat,
@@ -551,4 +574,5 @@ module.exports = {
   deleteConversation,
   getGroupChatInfo,
   getFormattedChatById,
+  deleteGroup,
 };

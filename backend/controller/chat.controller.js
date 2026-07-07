@@ -14,6 +14,7 @@ const {
   deleteConversation,
   getGroupChatInfo,
   getFormattedChatById,
+  deleteGroup,
 } = require("../services/chat.service");
 const socketManager = require("../socket/roomManager");
 const apiResponse = require("../utils/apiResponse");
@@ -163,12 +164,37 @@ const leaveGroupChatController = async (req, res) => {
         const userSocketId = socketManager.getUserSocketId(
           participant.toString(),
         );
-        if (userSocketId) {
-          io.to(userSocketId).emit("chat_created", chat);
-        }
+        if (chat)
+          if (userSocketId) {
+            io.to(userSocketId).emit("chat_created", chat);
+          }
       });
     }
     return apiResponse.success(res, "Left group chat successfully", chat);
+  } catch (error) {
+    return apiResponse.error(res, error.message);
+  }
+};
+
+const deleteGroupController = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { chatId } = req.params;
+    const { chat, participants } = await deleteGroup(userId, chatId);
+
+    const io = req.app.get("io");
+
+    if (io && participants) {
+      participants.forEach((participant) => {
+        const userSocketId = socketManager.getUserSocketId(
+          participant.toString(),
+        );
+        if (userSocketId) {
+          io.to(userSocketId).emit("chat_deleted", { _id: chatId });
+        }
+      });
+    }
+    return apiResponse.success(res, "Group deleted successfully", chat);
   } catch (error) {
     return apiResponse.error(res, error.message);
   }
@@ -344,4 +370,5 @@ module.exports = {
   clearChatController,
   deleteChatController,
   groupChatInfoController,
+  deleteGroupController,
 };
