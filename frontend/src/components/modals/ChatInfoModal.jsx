@@ -14,7 +14,10 @@ export default function ChatInfoModal({ isOpen, onClose, conversation }) {
 
   const getOtherParticipant = (conv) => {
     if (!conv || !conv.participants || conv.type !== 'direct') return null;
-    return conv.participants.find(p => p._id !== currentUser?.id && p._id !== currentUser?._id) || conv.participants[0];
+    return (
+      conv.participants.find((p) => p._id !== currentUser?.id && p._id !== currentUser?._id) ||
+      conv.participants[0]
+    );
   };
 
   const otherParticipant = getOtherParticipant(conversation);
@@ -92,7 +95,9 @@ export default function ChatInfoModal({ isOpen, onClose, conversation }) {
                 <h3 className="text-xl font-bold text-dark-text mb-1">
                   {conversation.name || conversation.username}
                 </h3>
-                <p className={`text-sm mb-6 ${isOnline ? 'text-primary' : 'text-dark-text-muted font-medium'}`}>
+                <p
+                  className={`text-sm mb-6 ${isOnline ? 'text-primary' : 'text-dark-text-muted font-medium'}`}
+                >
                   {lastSeenText}
                 </p>
 

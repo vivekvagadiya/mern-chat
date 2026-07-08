@@ -15,6 +15,9 @@ const {
   clearChatController,
   deleteChatController,
   groupChatInfoController,
+  deleteGroupController,
+  togglePinStatusController,
+  toggleFavoriteStatusController,
 } = require("../controller/chat.controller");
 const router = express.Router();
 const validateSchema = require("../validators/schema.validator");
@@ -98,7 +101,22 @@ router.get(
   validateSchema(getChatByIdSchema),
   groupChatInfoController,
 );
-
+router.delete(
+  "/delete-group/:chatId",
+  validateSchema(getChatByIdSchema),
+  deleteGroupController,
+);
 router.get("/search", validateSchema(searchChatSchema), searchChatController);
+
+router.put(
+  "/toggle-pin-status/:chatId",
+  validateSchema(getChatByIdSchema),
+  togglePinStatusController,
+);
+router.put(
+  "/toggle-favorite-status/:chatId",
+  validateSchema(getChatByIdSchema),
+  toggleFavoriteStatusController,
+);
 
 module.exports = router;

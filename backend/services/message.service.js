@@ -1,9 +1,11 @@
+const mongoose = require("mongoose");
 const Chat = require("../models/chat.model");
 const Message = require("../models/message.model");
+const ChatMember = require("../models/chatMember.model");
 
 const getChatOrThrow = async (chatId) => {
   const chat = await Chat.findById(chatId)
-    .select("participants type isActive");
+    .select("participants type isActive lastMessage");
 
   if (!chat) {
     throw new Error("Chat not found");
@@ -51,7 +53,6 @@ const sendMessage = async (
     content: content.trim(),
     type: type, // Use 'messageType' instead of 'type'
     mediaUrl: mediaUrl, // Use 'fileUrl' instead of 'mediaUrl'
-    readBy: [userId],
   });
 
   // Update chat's last message
@@ -60,50 +61,90 @@ const sendMessage = async (
     updatedAt: new Date(),
   });
 
+  // Update sender's ChatMember lastReadMessage
+  await ChatMember.findOneAndUpdate(
+    { chatId, userId },
+    {
+      $set: {
+        lastReadMessage: message._id,
+        lastReadAt: new Date(),
+      }
+    },
+    { upsert: true }
+  );
+
   // Return populated message
   return await Message.findById(message._id)
     .populate("senderId", "username avatar")
     .select("-__v");
 };
-const getMessages = async (chatId, userId, page = 1, limit = 20) => {
+const getMessages = async (chatId, userId, before = null, limit = 20) => {
   const chat = await getChatOrThrow(chatId);
 
   if (!isParticipant(chat, userId)) {
     throw new Error("You are not a participant of this chat");
   }
 
-  // Validate and sanitize pagination
-  page = Math.max(1, Number(page) || 1);
-  limit = Math.min(50, Math.max(1, Number(limit) || 20));
-  const skip = (page - 1) * limit;
+  // Update ChatMember's lastReadMessage and lastReadAt for the viewing user
+  if (chat.lastMessage) {
+    await ChatMember.findOneAndUpdate(
+      { chatId, userId },
+      {
+        $set: {
+          lastReadMessage: chat.lastMessage,
+          lastReadAt: new Date(),
+        }
+      },
+      { upsert: true }
+    );
+  } else {
+    await ChatMember.findOneAndUpdate(
+      { chatId, userId },
+      {
+        $set: {
+          lastReadAt: new Date(),
+        }
+      },
+      { upsert: true }
+    );
+  }
 
-  const [messages, total] = await Promise.all([
-    Message.find({ 
-      chatId: chatId, // Use 'chat' instead of 'chatId'
-      isDeleted: { $ne: true } // Exclude deleted messages
-    })
-      .populate("senderId", "username avatar") // Use 'sender' instead of 'senderId'
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .select("-__v")
-      .lean(),
+  // Validate and sanitize limit (capped at 100)
+  limit = Math.min(100, Math.max(1, Number(limit) || 20));
 
-    Message.countDocuments({ 
-      chatId: chatId,
-      isDeleted: { $ne: true }
-    }),
-  ]);
+  const query = {
+    chatId: chatId,
+    isDeleted: { $ne: true } // Exclude deleted messages
+  };
+
+  if (before) {
+    if (mongoose.Types.ObjectId.isValid(before)) {
+      query._id = { $lt: new mongoose.Types.ObjectId(before) };
+    } else {
+      console.warn(`Invalid before cursor provided: ${before}. Loading latest messages instead.`);
+    }
+  }
+
+  // Fetch limit + 1 messages to determine hasMore
+  const messages = await Message.find(query)
+    .populate("senderId", "username avatar")
+    .sort({ _id: -1 }) // Sort newest first
+    .limit(limit + 1)
+    .select("-__v")
+    .lean();
+
+  const hasMore = messages.length > limit;
+  const slicedMessages = hasMore ? messages.slice(0, limit) : messages;
+
+  // The cursor for the next page is the ID of the oldest message in our current result batch
+  // Since we sorted descending, the last element of the sliced batch is the oldest.
+  const nextCursor = slicedMessages.length > 0 ? slicedMessages[slicedMessages.length - 1]._id.toString() : null;
 
   return {
-    messages: messages.reverse(), // Show oldest first for chat UI
+    messages: slicedMessages.reverse(), // Reverse to return in chronological order (oldest first)
     pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-      hasNextPage: page * limit < total,
-      hasPrevPage: page > 1,
+      hasMore,
+      nextCursor: hasMore ? nextCursor : null,
     },
   };
 };
@@ -129,17 +170,22 @@ const markAsRead = async (messageId, userId) => {
     throw new Error("You are not a participant of this chat");
   }
 
-  return await Message.findByIdAndUpdate(
-    messageId,
-    {
-      $addToSet: {
-        readBy: userId,
+  // Update ChatMember's lastReadMessage if the message is newer than current lastReadMessage
+  const member = await ChatMember.findOne({ chatId: message.chatId, userId });
+  if (!member || !member.lastReadMessage || messageId > member.lastReadMessage.toString()) {
+    await ChatMember.findOneAndUpdate(
+      { chatId: message.chatId, userId },
+      {
+        $set: {
+          lastReadMessage: message._id,
+          lastReadAt: new Date(),
+        }
       },
-    },
-    {
-      new: true,
-    }
-  ).select("-__v");
+      { upsert: true }
+    );
+  }
+
+  return message;
 };
 
 const markChatAsRead = async (chatId, userId) => {
@@ -149,23 +195,32 @@ const markChatAsRead = async (chatId, userId) => {
     throw new Error("You are not a participant of this chat");
   }
 
-  const result = await Message.updateMany(
-    {
-      chat: chatId, // Use 'chat' instead of 'chatId'
-      sender: { $ne: userId }, // Use 'sender' instead of 'senderId'
-      readBy: { $ne: userId },
-      isDeleted: { $ne: true },
-    },
-    {
-      $addToSet: {
-        readBy: userId,
+  if (chat.lastMessage) {
+    await ChatMember.findOneAndUpdate(
+      { chatId, userId },
+      {
+        $set: {
+          lastReadMessage: chat.lastMessage,
+          lastReadAt: new Date(),
+        }
       },
-    },
-  );
+      { upsert: true }
+    );
+  } else {
+    await ChatMember.findOneAndUpdate(
+      { chatId, userId },
+      {
+        $set: {
+          lastReadAt: new Date(),
+        }
+      },
+      { upsert: true }
+    );
+  }
 
   return {
-    markedCount: result.modifiedCount,
-    message: `Marked ${result.modifiedCount} messages as read`
+    markedCount: 1,
+    message: "Chat marked as read"
   };
 };
 
@@ -269,12 +324,18 @@ const getUnreadCount = async (chatId, userId) => {
     throw new Error("You are not a participant of this chat");
   }
 
-  const count = await Message.countDocuments({
+  const member = await ChatMember.findOne({ chatId, userId });
+  const query = {
     chatId: chatId,
     senderId: { $ne: userId },
-    readBy: { $ne: userId },
     isDeleted: { $ne: true }
-  });
+  };
+
+  if (member && member.lastReadMessage) {
+    query._id = { $gt: member.lastReadMessage };
+  }
+
+  const count = await Message.countDocuments(query);
 
   return { unreadCount: count };
 };

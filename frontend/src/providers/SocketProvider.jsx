@@ -23,6 +23,9 @@ import {
   clearChat,
   deleteChat,
   memberRemoved,
+  chatCreated,
+  togglePinned,
+  toggleFavorite,
 } from '../store/slices/chatSlice';
 
 export default function SocketProvider({ children }) {
@@ -138,6 +141,7 @@ export default function SocketProvider({ children }) {
 
     socket.on('message_received', (message) => {
       // Add message to current conversation if active
+      console.log('message_received', message);
       dispatch(
         addMessage({
           conversationId: message.chatId,
@@ -145,16 +149,11 @@ export default function SocketProvider({ children }) {
         })
       );
 
-      // Update chat list and unread count if message is from another user
+      // If the user is actively viewing this chat and the message is from another user, mark as read on backend via socket
       const currentUserId = user?._id || user?.id;
-      if (currentUserId && message.senderId !== currentUserId) {
-        dispatch(
-          updateChat({
-            chatId: message.chatId,
-            lastMessage: message,
-            currentUserId: currentUserId,
-          })
-        );
+      const senderIdStr = message?.senderId?._id || message?.senderId;
+      if (currentUserId && senderIdStr !== currentUserId && message.chatId === currentConversationId) {
+        socket.emit('mark_read', { messageId: message._id || message.id });
       }
 
       // Show notification if not in active conversation
@@ -184,7 +183,7 @@ export default function SocketProvider({ children }) {
     socket.on('chat_created', (chat) => {
       console.log('chat_created', chat);
       // Refresh conversations list to include the new chat
-      dispatch(fetchConversation());
+      dispatch(chatCreated(chat));
     });
 
     socket.on('member_removed', (data) => {
@@ -237,6 +236,15 @@ export default function SocketProvider({ children }) {
           deliveredTo: data.deliveredTo,
         })
       );
+    });
+    socket.on('chat_pinned', (data) => {
+      console.log('chat_pinned', data);
+
+      dispatch(togglePinned(data));
+    });
+    socket.on('chat_favorited', (data) => {
+      console.log('chat_favorited', data);
+      dispatch(toggleFavorite(data));
     });
 
     socket.on('chat_read', (data) => {

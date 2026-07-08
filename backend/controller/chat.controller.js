@@ -13,6 +13,10 @@ const {
   clearChat,
   deleteConversation,
   getGroupChatInfo,
+  getFormattedChatById,
+  deleteGroup,
+  toggleFavoriteStatus,
+  togglePinStatus,
 } = require("../services/chat.service");
 const socketManager = require("../socket/roomManager");
 const apiResponse = require("../utils/apiResponse");
@@ -30,12 +34,13 @@ const createDirectChatController = async (req, res) => {
       // Notify both participants about the new chat
       const participants = [userId, participantId];
 
-      participants.forEach((participantId) => {
-        const userSocketId = socketManager.getUserSocketId(participantId);
+      for (const pId of participants) {
+        const userSocketId = socketManager.getUserSocketId(pId);
         if (userSocketId) {
-          io.to(userSocketId).emit("chat_created", chat);
+          const formattedChat = await getFormattedChatById(chat._id, pId);
+          io.to(userSocketId).emit("chat_created", formattedChat);
         }
-      });
+      }
     }
 
     return apiResponse.success(res, "Direct chat created successfully", chat);
@@ -133,7 +138,9 @@ const removeMembersFromGroupController = async (req, res) => {
       // 2. Notify the remaining members so their sidebars and info are synchronized
       const remainingParticipants = chat.participants;
       remainingParticipants.forEach((participant) => {
-        const userSocketId = socketManager.getUserSocketId(participant.toString());
+        const userSocketId = socketManager.getUserSocketId(
+          participant.toString(),
+        );
         if (userSocketId) {
           io.to(userSocketId).emit("chat_created", chat);
         }
@@ -156,13 +163,40 @@ const leaveGroupChatController = async (req, res) => {
       // Notify remaining participants
       const remainingParticipants = chat.participants;
       remainingParticipants.forEach((participant) => {
-        const userSocketId = socketManager.getUserSocketId(participant.toString());
-        if (userSocketId) {
-          io.to(userSocketId).emit("chat_created", chat);
-        }
+        const userSocketId = socketManager.getUserSocketId(
+          participant.toString(),
+        );
+        if (chat)
+          if (userSocketId) {
+            io.to(userSocketId).emit("chat_created", chat);
+          }
       });
     }
     return apiResponse.success(res, "Left group chat successfully", chat);
+  } catch (error) {
+    return apiResponse.error(res, error.message);
+  }
+};
+
+const deleteGroupController = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { chatId } = req.params;
+    const { chat, participants } = await deleteGroup(userId, chatId);
+
+    const io = req.app.get("io");
+
+    if (io && participants) {
+      participants.forEach((participant) => {
+        const userSocketId = socketManager.getUserSocketId(
+          participant.toString(),
+        );
+        if (userSocketId) {
+          io.to(userSocketId).emit("chat_deleted", { _id: chatId });
+        }
+      });
+    }
+    return apiResponse.success(res, "Group deleted successfully", chat);
   } catch (error) {
     return apiResponse.error(res, error.message);
   }
@@ -180,7 +214,9 @@ const updateGroupChatController = async (req, res) => {
       // Notify all participants about group details update
       const participants = chat.participants;
       participants.forEach((participant) => {
-        const userSocketId = socketManager.getUserSocketId(participant.toString());
+        const userSocketId = socketManager.getUserSocketId(
+          participant.toString(),
+        );
         if (userSocketId) {
           io.to(userSocketId).emit("chat_created", chat);
         }
@@ -204,7 +240,9 @@ const assignAdminRoleController = async (req, res) => {
       // Notify all participants about role update
       const participants = chat.participants;
       participants.forEach((participant) => {
-        const userSocketId = socketManager.getUserSocketId(participant._id ? participant._id.toString() : participant.toString());
+        const userSocketId = socketManager.getUserSocketId(
+          participant._id ? participant._id.toString() : participant.toString(),
+        );
         if (userSocketId) {
           io.to(userSocketId).emit("chat_created", chat);
         }
@@ -228,7 +266,9 @@ const revokeAdminRoleController = async (req, res) => {
       // Notify all participants about role update
       const participants = chat.participants;
       participants.forEach((participant) => {
-        const userSocketId = socketManager.getUserSocketId(participant.toString());
+        const userSocketId = socketManager.getUserSocketId(
+          participant.toString(),
+        );
         if (userSocketId) {
           io.to(userSocketId).emit("chat_created", chat);
         }
@@ -317,6 +357,52 @@ const groupChatInfoController = async (req, res) => {
   }
 };
 
+const togglePinStatusController = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { chatId } = req.params;
+    const chat = await togglePinStatus(userId, chatId);
+    const io = req.app.get("io");
+
+    if (io) {
+      const users = chat.participants;
+      users.forEach((user) => {
+        const userSocketId = socketManager.getUserSocketId(user._id.toString());
+
+        if (userSocketId) {
+          io.to(userSocketId).emit("chat_pinned", chat);
+        }
+      });
+    }
+    return apiResponse.success(res, "Chat pinned successfully", chat);
+  } catch (error) {
+    return apiResponse.error(res, error.message);
+  }
+};
+
+const toggleFavoriteStatusController = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { chatId } = req.params;
+    const chat = await toggleFavoriteStatus(userId, chatId);
+    const io = req.app.get("io");
+
+    if (io) {
+      const users = chat.participants;
+      users.forEach((user) => {
+        const userSocketId = socketManager.getUserSocketId(user._id.toString());
+
+        if (userSocketId) {
+          io.to(userSocketId).emit("chat_favorited", chat);
+        }
+      });
+    }
+    return apiResponse.success(res, "Chat favorited successfully", chat);
+  } catch (error) {
+    return apiResponse.error(res, error.message);
+  }
+};
+
 module.exports = {
   addMembersToGroupChatController,
   assignAdminRoleController,
@@ -332,4 +418,7 @@ module.exports = {
   clearChatController,
   deleteChatController,
   groupChatInfoController,
+  deleteGroupController,
+  togglePinStatusController,
+  toggleFavoriteStatusController,
 };

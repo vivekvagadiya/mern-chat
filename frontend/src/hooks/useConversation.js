@@ -7,25 +7,23 @@ import socketService from '../services/socket.service';
 
 export const useConversation = () => {
   const dispatch = useDispatch();
-  const { conversations, currentConversationId, messages, chatInfo, pagination, loading, messagesLoading, error } =
-    useSelector((state) => state.chat);
+  const {
+    conversations,
+    currentConversationId,
+    messages,
+    chatInfo,
+    pagination,
+    loading,
+    messagesLoading,
+    error,
+    conversationsFetched,
+  } = useSelector((state) => state.chat);
 
   useEffect(() => {
-    dispatch(fetchConversation());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (currentConversationId) {
-      socketService.joinRoom(currentConversationId);
-      dispatch(fetchMessages({ chatId: currentConversationId }));
-      dispatch(markConversationAsRead(currentConversationId));
+    if (!conversationsFetched && !loading) {
+      dispatch(fetchConversation());
     }
-    // return () => {
-    //   if (currentConversationId) {
-    //     socketService.leaveRoom(currentConversationId);
-    //   }
-    // };
-  }, [currentConversationId, dispatch]);
+  }, [dispatch, conversationsFetched, loading]);
 
   const selectConversation = (conversationId) => {
     dispatch(setCurrentConversation(conversationId));

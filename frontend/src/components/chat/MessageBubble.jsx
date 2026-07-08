@@ -70,11 +70,11 @@ export default function MessageBubble({ message }) {
 
       <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} gap-1.5`}>
         {/* User name for group messages */}
-        {!isOwn && (
+        {/* {!isOwn && (
           <span className="text-xs font-medium text-dark-text-muted px-3 pt-1">
             {message?.senderId?.username}
           </span>
-        )}
+        )} */}
 
         {/* Message Bubble */}
         <div className="relative group/bubble">

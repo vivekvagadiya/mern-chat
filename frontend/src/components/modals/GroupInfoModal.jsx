@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   Search,
   Check,
+  Trash2,
 } from 'lucide-react';
 import Avatar from '../common/Avatar.jsx';
 import { useToast } from '../ToastContainer.jsx';
@@ -27,6 +28,7 @@ import {
   updateGroupChat,
   addMembersToGroupChat,
   searchConversation,
+  deleteGroup,
 } from '../../api/conversation.js';
 import { useDebounce } from '../../hooks/useDebounce.js';
 import { getTimeStamp } from '../../utils/helper.js';
@@ -151,7 +153,7 @@ export default function GroupInfoModal({ isOpen, onClose, conversation }) {
       toast.success(response.message || 'Member removed successfully');
       setOpenMenuId(null);
       fetchInfo();
-      dispatch(fetchConversation());
+      // dispatch(fetchConversation());
     } catch (error) {
       toast.error(error.message || 'Failed to remove member');
     }
@@ -182,6 +184,18 @@ export default function GroupInfoModal({ isOpen, onClose, conversation }) {
       dispatch(fetchConversation());
     } catch (error) {
       toast.error(error.message || 'Failed to update group name');
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    try {
+      const result = await deleteGroup(conversation._id);
+      toast.success(result.message || 'Group deleted successfully');
+      onClose();
+      dispatch(setCurrentConversation(null));
+      dispatch(fetchConversation());
+    } catch (error) {
+      toast.error(error.message || 'Failed to delete group');
     }
   };
 
@@ -584,15 +598,27 @@ export default function GroupInfoModal({ isOpen, onClose, conversation }) {
                     </div>
 
                     {/* Leave Group Action */}
-                    <div className="w-full mt-6">
-                      <button
-                        onClick={handleLeaveGroup}
-                        className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-error/10 border border-error/20 hover:bg-error/20 transition-colors text-error font-medium"
-                      >
-                        <LogOut size={18} />
-                        <span>Leave Group</span>
-                      </button>
-                    </div>
+                    {info.isCurrentUserCreator ? (
+                      <div className="w-full mt-6">
+                        <button
+                          onClick={handleDeleteGroup}
+                          className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-error/10 border border-error/20 hover:bg-error/20 transition-colors text-error font-medium"
+                        >
+                          <Trash2 size={18} />
+                          <span>Delete Group</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-full mt-6">
+                        <button
+                          onClick={handleLeaveGroup}
+                          className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-error/10 border border-error/20 hover:bg-error/20 transition-colors text-error font-medium"
+                        >
+                          <LogOut size={18} />
+                          <span>Leave Group</span>
+                        </button>
+                      </div>
+                    )}
                   </>
                 )}
               </div>

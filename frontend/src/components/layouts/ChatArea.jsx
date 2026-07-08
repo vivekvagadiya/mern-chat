@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Video, Info, Clock, Menu, Check, CheckCheck } from 'lucide-react';
@@ -8,6 +8,7 @@ import MessageComposer from '../chat/MessageComposer';
 import { setSidebarOpen } from '../../store/slices/uiSlice.js';
 import { markConversationAsRead } from '../../store/slices/chatSlice.js';
 import { useConversation } from '../../hooks/useConversation.js';
+import { fetchMessages } from '../../store/actions/message.actions.js';
 import { formatChatDate, getTimeStamp } from '../../utils/helper.js';
 import Avatar from '../common/Avatar.jsx';
 import ChatInfoModal from '../modals/ChatInfoModal';
@@ -16,11 +17,10 @@ import { useUserPresence } from '../../hooks/useUserPresence';
 
 export default function ChatArea() {
   const dispatch = useDispatch();
-  const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const { mobileView } = useSelector((state) => state.ui);
   const { user } = useSelector((state) => state.auth);
-  const { typingUsers } = useSelector((state) => state.chat);
+  const { typingUsers, messagesLoading } = useSelector((state) => state.chat);
   const { messages, currentConversation, pagination } = useConversation();
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
@@ -29,28 +29,100 @@ export default function ChatArea() {
 
   const getOtherParticipant = (conv) => {
     if (!conv || !conv.participants || conv.type !== 'direct') return null;
-    return conv.participants.find(p => p._id !== user?.id && p._id !== user?._id) || conv.participants[0];
+    return (
+      conv.participants.find((p) => p._id !== user?.id && p._id !== user?._id) ||
+      conv.participants[0]
+    );
   };
 
   const otherParticipant = getOtherParticipant(currentConversation);
   const { isOnline, lastSeenText } = useUserPresence(otherParticipant?._id || otherParticipant?.id);
 
-  const scrollToBottom = () => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+  const prevScrollHeightRef = useRef(0);
+  const prevScrollTopRef = useRef(0);
+  const isInitialLoadRef = useRef(true);
+  const isFetchingMoreRef = useRef(false);
+
+  // Reset scroll state on chat switch and fetch messages
+  useEffect(() => {
+    isInitialLoadRef.current = true;
+    isFetchingMoreRef.current = false;
+    prevScrollHeightRef.current = 0;
+    prevScrollTopRef.current = 0;
+    if (currentConversation?._id) {
+      dispatch(fetchMessages({ chatId: currentConversation._id }));
+      dispatch(markConversationAsRead(currentConversation._id));
+    }
+  }, [currentConversation?._id, dispatch]);
+
+  const loadMoreMessages = async () => {
+    if (
+      messagesLoading ||
+      isFetchingMoreRef.current ||
+      !pagination?.hasMore ||
+      !pagination?.nextCursor ||
+      !currentConversation?._id
+    ) {
+      return;
+    }
+
+    isFetchingMoreRef.current = true;
+
+    // Capture scroll details before prepending new messages
+    const container = messagesContainerRef.current;
+    if (container) {
+      prevScrollHeightRef.current = container.scrollHeight;
+      prevScrollTopRef.current = container.scrollTop;
+    }
+
+    try {
+      await dispatch(
+        fetchMessages({
+          chatId: currentConversation._id,
+          before: pagination.nextCursor,
+        })
+      ).unwrap();
+    } catch (error) {
+      console.error('Error fetching older messages:', error);
+    } finally {
+      isFetchingMoreRef.current = false;
     }
   };
 
-  useEffect(() => {
-    if (currentConversation) {
-      dispatch(markConversationAsRead(currentConversation._id));
-      scrollToBottom();
-    }
-  }, [currentConversation, dispatch]);
+  const handleScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages.length]);
+    if (container.scrollTop < 50) {
+      loadMoreMessages();
+    }
+  };
+
+  useLayoutEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    if (isInitialLoadRef.current) {
+      container.scrollTop = container.scrollHeight;
+      if (messages.length > 0) {
+        isInitialLoadRef.current = false;
+      }
+      return;
+    }
+
+    if (prevScrollHeightRef.current > 0) {
+      const scrollHeightDiff = container.scrollHeight - prevScrollHeightRef.current;
+      container.scrollTop = prevScrollTopRef.current + scrollHeightDiff;
+      prevScrollHeightRef.current = 0;
+      prevScrollTopRef.current = 0;
+    } else {
+      const isNearBottom =
+        container.scrollHeight - container.clientHeight - container.scrollTop < 150;
+      if (isNearBottom) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+  }, [messages]);
 
   if (!currentConversation) {
     return (
@@ -140,12 +212,33 @@ export default function ChatArea() {
       {/* Messages */}
       <div className="flex-1 relative overflow-hidden">
         <div
-          className="h-full overflow-y-auto px-4 py-4 space-y-4 scroll-smooth"
+          className="h-full overflow-y-auto px-4 py-4 space-y-4"
           ref={messagesContainerRef}
+          onScroll={handleScroll}
         >
+          {/* Loading spinner for older messages */}
+          {messagesLoading && messages.length > 0 && (
+            <div className="flex justify-center items-center py-2" key="loading-older">
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+            </div>
+          )}
+
           <AnimatePresence>
-            {messages.length === 0 ? (
+            {messages.length === 0 && messagesLoading ? (
               <motion.div
+                key="loading-initial"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="h-full flex items-center justify-center"
+              >
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+                  <p className="text-sm text-dark-text-muted">Loading conversation...</p>
+                </div>
+              </motion.div>
+            ) : messages.length === 0 ? (
+              <motion.div
+                key="no-messages"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="h-full flex items-center justify-center"
@@ -185,36 +278,6 @@ export default function ChatArea() {
               })
             )}
           </AnimatePresence>
-
-          {/* Typing Indicator */}
-          {otherTypingUserIds.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="flex justify-start gap-3 mt-4"
-            >
-              <div className="bg-dark-surface-alt border border-glass-light rounded-lg rounded-bl-none px-4 py-3 w-fit flex items-center gap-1.5 backdrop-blur-sm">
-                <motion.div
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 0.6, repeat: Infinity, ease: 'easeInOut' }}
-                  className="w-1.5 h-1.5 bg-dark-text-muted rounded-full"
-                />
-                <motion.div
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 0.6, repeat: Infinity, delay: 0.2, ease: 'easeInOut' }}
-                  className="w-1.5 h-1.5 bg-dark-text-muted rounded-full"
-                />
-                <motion.div
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 0.6, repeat: Infinity, delay: 0.4, ease: 'easeInOut' }}
-                  className="w-1.5 h-1.5 bg-dark-text-muted rounded-full"
-                />
-              </div>
-            </motion.div>
-          )}
-
-          <div ref={messagesEndRef} />
         </div>
       </div>
 
@@ -224,16 +287,16 @@ export default function ChatArea() {
       </div>
       {/* Modals */}
       {currentConversation?.type === 'group' ? (
-        <GroupInfoModal 
-          isOpen={isInfoModalOpen} 
-          onClose={() => setIsInfoModalOpen(false)} 
-          conversation={currentConversation} 
+        <GroupInfoModal
+          isOpen={isInfoModalOpen}
+          onClose={() => setIsInfoModalOpen(false)}
+          conversation={currentConversation}
         />
       ) : (
-        <ChatInfoModal 
-          isOpen={isInfoModalOpen} 
-          onClose={() => setIsInfoModalOpen(false)} 
-          conversation={currentConversation} 
+        <ChatInfoModal
+          isOpen={isInfoModalOpen}
+          onClose={() => setIsInfoModalOpen(false)}
+          conversation={currentConversation}
         />
       )}
     </div>

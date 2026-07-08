@@ -50,13 +50,6 @@ const sendMessageController = async (req, res) => {
           }
         });
       }
-
-      // Also broadcast to room for users who are actively viewing
-      io.to(chatId).emit("message_received", message);
-      io.to(chatId).emit("chat_updated", {
-        chatId,
-        lastMessage: message,
-      });
     }
 
     return apiResponse.success(res, "Message sent successfully", message);
@@ -68,11 +61,11 @@ const sendMessageController = async (req, res) => {
 const getMessagesController = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { chatId, page, limit } = req.query;
+    const { chatId, before, limit } = req.query;
     const messages = await messageService.getMessages(
       chatId,
       userId,
-      page,
+      before,
       limit,
     );
     return apiResponse.success(res, "Messages fetched successfully", messages);

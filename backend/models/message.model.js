@@ -28,12 +28,6 @@ const messageSchema = new Schema(
       type: String,
       default: null,
     },
-    readBy: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
     isEdited: {
       type: Boolean,
       default: false,
@@ -48,7 +42,7 @@ const messageSchema = new Schema(
     },
     deletedAt: {
       type: Date,
-      default:null
+      default: null,
     },
   },
   {
@@ -56,8 +50,8 @@ const messageSchema = new Schema(
   },
 );
 
-// Index to efficiently query messages for a specific chat, sorted by creation time.
-// This is crucial for fetching chat history.
-messageSchema.index({ chatId: 1, createdAt: -1 });
+// Index to efficiently query messages for a specific chat, sorted by ObjectId.
+// This is crucial for fast cursor-based pagination and fetching chat history.
+messageSchema.index({ chatId: 1, _id: -1 });
 
 module.exports = mongoose.model("Message", messageSchema);

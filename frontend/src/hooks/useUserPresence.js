@@ -3,7 +3,6 @@ import { isUserOnline, getUserStatus, getUserLastSeen, formatLastSeen } from '..
 
 export const useUserPresence = (userId) => {
   const { onlineUsers, userStatuses } = useSelector((state) => state.socket);
-  console.log('onlineUsers', onlineUsers);
 
   if (!userId) {
     return { isOnline: false, status: 'offline', lastSeenText: '' };

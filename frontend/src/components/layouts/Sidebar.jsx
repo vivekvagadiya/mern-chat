@@ -20,11 +20,9 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all'); // all, pinned, favorites
   const { conversations, loading, messages, selectConversation } = useConversation();
-  console.log('conversations', conversations, messages);
   const { mobileView } = useSelector((state) => state.ui);
   const { onlineUsers } = useSelector((state) => state.socket);
   const { user } = useSelector((state) => state.auth);
-  console.log('onlineUsers', onlineUsers);
 
   const pinnedConversations = conversations.filter((c) => c.isPinned);
   const favoriteConversations = conversations.filter((c) => c.isFavorite);
@@ -90,7 +88,7 @@ export default function Sidebar() {
             >
               {Icon && <Icon size={14} />}
               {tab.label}
-              {tab.count && (
+              {tab.count > 0 && (
                 <span className="ml-1 px-2 py-0.5 bg-dark-surface-alt rounded text-xs">
                   {tab.count}
                 </span>
