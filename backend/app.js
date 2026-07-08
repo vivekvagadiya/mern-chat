@@ -11,10 +11,12 @@ const authRoutes = require("./routes/auth.routes");
 const chatRoutes = require("./routes/chat.routes");
 const messageRoutes = require("./routes/message.routes");
 
+const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, "") : "http://localhost:5173";
+
 app.use(
   cors({
     origin: [
-      process.env.CLIENT_URL || "http://localhost:5173", // Vite default port
+      clientUrl,
       "http://localhost:5173",
       "http://127.0.0.1:5173",
       "http://localhost:3000",

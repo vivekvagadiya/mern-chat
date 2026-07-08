@@ -9,9 +9,17 @@ const {
 const { handleMessageHandlers } = require("./messageHandler");
 
 const initializeSocket = (httpServer) => {
+  const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, "") : "http://localhost:3000";
+
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL || "http://localhost:3000",
+      origin: [
+        clientUrl,
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+      ],
       methods: ["GET", "POST"],
       credentials: true,
     },
