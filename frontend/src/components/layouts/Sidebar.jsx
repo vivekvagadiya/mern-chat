@@ -88,7 +88,7 @@ export default function Sidebar() {
             >
               {Icon && <Icon size={14} />}
               {tab.label}
-              {tab.count && (
+              {tab.count > 0 && (
                 <span className="ml-1 px-2 py-0.5 bg-dark-surface-alt rounded text-xs">
                   {tab.count}
                 </span>

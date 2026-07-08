@@ -1,10 +1,11 @@
 const mongoose = require("mongoose");
 const Chat = require("../models/chat.model");
 const Message = require("../models/message.model");
+const ChatMember = require("../models/chatMember.model");
 
 const getChatOrThrow = async (chatId) => {
   const chat = await Chat.findById(chatId)
-    .select("participants type isActive");
+    .select("participants type isActive lastMessage");
 
   if (!chat) {
     throw new Error("Chat not found");
@@ -52,7 +53,6 @@ const sendMessage = async (
     content: content.trim(),
     type: type, // Use 'messageType' instead of 'type'
     mediaUrl: mediaUrl, // Use 'fileUrl' instead of 'mediaUrl'
-    readBy: [userId],
   });
 
   // Update chat's last message
@@ -60,6 +60,18 @@ const sendMessage = async (
     lastMessage: message._id,
     updatedAt: new Date(),
   });
+
+  // Update sender's ChatMember lastReadMessage
+  await ChatMember.findOneAndUpdate(
+    { chatId, userId },
+    {
+      $set: {
+        lastReadMessage: message._id,
+        lastReadAt: new Date(),
+      }
+    },
+    { upsert: true }
+  );
 
   // Return populated message
   return await Message.findById(message._id)
@@ -71,6 +83,30 @@ const getMessages = async (chatId, userId, before = null, limit = 20) => {
 
   if (!isParticipant(chat, userId)) {
     throw new Error("You are not a participant of this chat");
+  }
+
+  // Update ChatMember's lastReadMessage and lastReadAt for the viewing user
+  if (chat.lastMessage) {
+    await ChatMember.findOneAndUpdate(
+      { chatId, userId },
+      {
+        $set: {
+          lastReadMessage: chat.lastMessage,
+          lastReadAt: new Date(),
+        }
+      },
+      { upsert: true }
+    );
+  } else {
+    await ChatMember.findOneAndUpdate(
+      { chatId, userId },
+      {
+        $set: {
+          lastReadAt: new Date(),
+        }
+      },
+      { upsert: true }
+    );
   }
 
   // Validate and sanitize limit (capped at 100)
@@ -134,17 +170,22 @@ const markAsRead = async (messageId, userId) => {
     throw new Error("You are not a participant of this chat");
   }
 
-  return await Message.findByIdAndUpdate(
-    messageId,
-    {
-      $addToSet: {
-        readBy: userId,
+  // Update ChatMember's lastReadMessage if the message is newer than current lastReadMessage
+  const member = await ChatMember.findOne({ chatId: message.chatId, userId });
+  if (!member || !member.lastReadMessage || messageId > member.lastReadMessage.toString()) {
+    await ChatMember.findOneAndUpdate(
+      { chatId: message.chatId, userId },
+      {
+        $set: {
+          lastReadMessage: message._id,
+          lastReadAt: new Date(),
+        }
       },
-    },
-    {
-      new: true,
-    }
-  ).select("-__v");
+      { upsert: true }
+    );
+  }
+
+  return message;
 };
 
 const markChatAsRead = async (chatId, userId) => {
@@ -154,23 +195,32 @@ const markChatAsRead = async (chatId, userId) => {
     throw new Error("You are not a participant of this chat");
   }
 
-  const result = await Message.updateMany(
-    {
-      chat: chatId, // Use 'chat' instead of 'chatId'
-      sender: { $ne: userId }, // Use 'sender' instead of 'senderId'
-      readBy: { $ne: userId },
-      isDeleted: { $ne: true },
-    },
-    {
-      $addToSet: {
-        readBy: userId,
+  if (chat.lastMessage) {
+    await ChatMember.findOneAndUpdate(
+      { chatId, userId },
+      {
+        $set: {
+          lastReadMessage: chat.lastMessage,
+          lastReadAt: new Date(),
+        }
       },
-    },
-  );
+      { upsert: true }
+    );
+  } else {
+    await ChatMember.findOneAndUpdate(
+      { chatId, userId },
+      {
+        $set: {
+          lastReadAt: new Date(),
+        }
+      },
+      { upsert: true }
+    );
+  }
 
   return {
-    markedCount: result.modifiedCount,
-    message: `Marked ${result.modifiedCount} messages as read`
+    markedCount: 1,
+    message: "Chat marked as read"
   };
 };
 
@@ -274,12 +324,18 @@ const getUnreadCount = async (chatId, userId) => {
     throw new Error("You are not a participant of this chat");
   }
 
-  const count = await Message.countDocuments({
+  const member = await ChatMember.findOne({ chatId, userId });
+  const query = {
     chatId: chatId,
     senderId: { $ne: userId },
-    readBy: { $ne: userId },
     isDeleted: { $ne: true }
-  });
+  };
+
+  if (member && member.lastReadMessage) {
+    query._id = { $gt: member.lastReadMessage };
+  }
+
+  const count = await Message.countDocuments(query);
 
   return { unreadCount: count };
 };

@@ -42,7 +42,9 @@ const chatSlice = createSlice({
       if (conversation) {
         conversation.lastMessage = message;
         conversation.updatedAt = message.createdAt;
-        conversation.unread = 0;
+        if (state.currentConversationId === conversationId) {
+          conversation.unread = 0;
+        }
       }
     },
     updateChat: (state, action) => {
@@ -52,9 +54,18 @@ const chatSlice = createSlice({
         conversation.lastMessage = lastMessage;
         conversation.updatedAt = lastMessage?.createdAt || new Date().toISOString();
 
-        // Only increment unread count if current user is not the sender
-        if (currentUserId && lastMessage?.senderId !== currentUserId) {
-          conversation.unread = (conversation.unread || 0) + 1;
+        const senderIdStr = lastMessage?.senderId?._id || lastMessage?.senderId;
+        // Only increment unread count if current user is not the sender and they are not actively viewing this conversation
+        if (currentUserId && senderIdStr !== currentUserId) {
+          if (state.currentConversationId !== chatId) {
+            conversation.unread = (conversation.unread || 0) + 1;
+          } else {
+            conversation.unread = 0;
+          }
+        } else {
+          if (state.currentConversationId === chatId) {
+            conversation.unread = 0;
+          }
         }
 
         state.conversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));

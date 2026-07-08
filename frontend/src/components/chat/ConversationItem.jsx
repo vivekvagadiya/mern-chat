@@ -99,7 +99,7 @@ export default function ConversationItem({ conversation }) {
         </div>
 
         {/* Unread Badge */}
-        {/* {conversation.unread > 0 && (
+        {conversation.unread > 0 && (
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -107,7 +107,7 @@ export default function ConversationItem({ conversation }) {
           >
             {conversation.unread}
           </motion.div>
-        )} */}
+        )}
       </div>
 
       {/* Hover Actions */}

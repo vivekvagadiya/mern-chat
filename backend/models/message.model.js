@@ -28,12 +28,6 @@ const messageSchema = new Schema(
       type: String,
       default: null,
     },
-    readBy: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
     isEdited: {
       type: Boolean,
       default: false,
@@ -48,7 +42,7 @@ const messageSchema = new Schema(
     },
     deletedAt: {
       type: Date,
-      default:null
+      default: null,
     },
   },
   {

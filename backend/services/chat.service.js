@@ -1,6 +1,7 @@
 const Chat = require("../models/chat.model");
 const User = require("../models/user.model");
 const Message = require("../models/message.model");
+const ChatMember = require("../models/chatMember.model");
 
 const isAdmin = (chat, userId) => {
   return chat.admins.some(
@@ -16,6 +17,29 @@ const isParticipant = (chat, userId) => {
       : participant.toString();
     return participantId === userId.toString();
   });
+};
+
+const getChatMemberSettingsAndUnread = async (chatId, userId) => {
+  const member = await ChatMember.findOne({ chatId, userId });
+  let unreadCount = 0;
+
+  const query = {
+    chatId,
+    senderId: { $ne: userId },
+    isDeleted: { $ne: true },
+  };
+
+  if (member && member.lastReadMessage) {
+    query._id = { $gt: member.lastReadMessage };
+  }
+
+  unreadCount = await Message.countDocuments(query);
+
+  return {
+    isPinned: member ? member.pinned : false,
+    isFavorite: member ? member.favorite : false,
+    unread: unreadCount,
+  };
 };
 
 const formatChat = (chat, userId) => {
@@ -68,7 +92,14 @@ const getFormattedChatById = async (chatId, userId) => {
     });
 
   if (!chat) return null;
-  return formatChat(chat, userId);
+  const formatted = formatChat(chat, userId);
+  if (formatted) {
+    const settings = await getChatMemberSettingsAndUnread(chat._id, userId);
+    formatted.isPinned = settings.isPinned;
+    formatted.isFavorite = settings.isFavorite;
+    formatted.unread = settings.unread;
+  }
+  return formatted;
 };
 
 const createDirectChat = async (userId, participantId) => {
@@ -93,6 +124,16 @@ const createDirectChat = async (userId, participantId) => {
     participants: [userId, participantId],
     createdBy: userId,
   });
+  await ChatMember.insertMany([
+    {
+      chatId: chat._id,
+      userId: userId,
+    },
+    {
+      chatId: chat._id,
+      userId: participantId,
+    },
+  ]);
 
   return await getChatById(chat._id, userId);
 };
@@ -115,7 +156,20 @@ const getUserChats = async (userId) => {
     .sort({ updatedAt: -1 })
     .lean(); // Return plain JS objects
 
-  return chats.map((chat) => formatChat(chat, userId));
+  const formattedChats = await Promise.all(
+    chats.map(async (chat) => {
+      const formatted = formatChat(chat, userId);
+      if (formatted) {
+        const settings = await getChatMemberSettingsAndUnread(chat._id, userId);
+        formatted.isPinned = settings.isPinned;
+        formatted.isFavorite = settings.isFavorite;
+        formatted.unread = settings.unread;
+      }
+      return formatted;
+    })
+  );
+
+  return formattedChats.filter(Boolean);
 };
 
 const getChatById = async (chatId, userId = null) => {
@@ -140,7 +194,14 @@ const getChatById = async (chatId, userId = null) => {
     if (!isParticipant(chat, userId)) {
       throw new Error("Access denied: Not a participant");
     }
-    return formatChat(chat, userId);
+    const formatted = formatChat(chat, userId);
+    if (formatted) {
+      const settings = await getChatMemberSettingsAndUnread(chat._id, userId);
+      formatted.isPinned = settings.isPinned;
+      formatted.isFavorite = settings.isFavorite;
+      formatted.unread = settings.unread;
+    }
+    return formatted;
   }
 
   return chat;
@@ -163,6 +224,12 @@ const createGroupChat = async (userId, name, participantIds) => {
     admins: [userId],
     createdBy: userId,
   });
+  await ChatMember.insertMany(
+    uniqueParticipants.map((user) => ({
+      userId: user,
+      chatId: chat._id,
+    })),
+  );
 
   return await getChatById(chat._id, userId);
 };
@@ -206,6 +273,14 @@ const addMembersToGroupChat = async (userId, chatId, newMemberIds) => {
       },
     },
   });
+
+  // Create ChatMember records for the new participants
+  await ChatMember.insertMany(
+    actualNewMembers.map((memberId) => ({
+      chatId,
+      userId: memberId,
+    }))
+  );
 
   return getChatById(chatId, userId);
 };
@@ -252,6 +327,12 @@ const removeMembersFromGroupChat = async (userId, chatId, memberIds) => {
   }
 
   await chat.save();
+
+  // Delete ChatMember records for the removed members
+  await ChatMember.deleteMany({
+    chatId,
+    userId: { $in: memberIds },
+  });
 
   return await getChatById(chatId, userId);
 };
@@ -300,6 +381,12 @@ const leaveGroupChat = async (userId, chatId) => {
   }
 
   await chat.save();
+
+  // Delete ChatMember record for the leaving member
+  await ChatMember.deleteOne({
+    chatId,
+    userId,
+  });
 
   return chat;
 };
@@ -497,6 +584,8 @@ const deleteConversation = async (userId, chatId) => {
 
   await Chat.findByIdAndDelete(chatId);
 
+  await ChatMember.deleteMany({ chatId });
+
   return chat;
 };
 
@@ -556,6 +645,7 @@ const deleteGroup = async (userId, chatId) => {
   const participants = chat.participants;
   await Message.deleteMany({ chatId: chatId });
   await Chat.findByIdAndDelete(chatId);
+  await ChatMember.deleteMany({ chatId });
   return { chat, participants };
 };
 
@@ -568,10 +658,14 @@ const togglePinStatus = async (userId, chatId) => {
     throw new Error("Access denied: Not a participant");
   }
 
-  chat.isPinned = !chat.isPinned;
-  await chat.save();
+  let chatMember = await ChatMember.findOne({ chatId, userId });
+  if (!chatMember) {
+    chatMember = new ChatMember({ chatId, userId });
+  }
+  chatMember.pinned = !chatMember.pinned;
+  await chatMember.save();
+
   return getChatById(chatId, userId);
-  s;
 };
 
 const toggleFavoriteStatus = async (userId, chatId) => {
@@ -583,8 +677,13 @@ const toggleFavoriteStatus = async (userId, chatId) => {
     throw new Error("Access denied: Not a participant");
   }
 
-  chat.isFavorite = !chat.isFavorite;
-  await chat.save();
+  let chatMember = await ChatMember.findOne({ chatId, userId });
+  if (!chatMember) {
+    chatMember = new ChatMember({ chatId, userId });
+  }
+  chatMember.favorite = !chatMember.favorite;
+  await chatMember.save();
+
   return getChatById(chatId, userId);
 };
 module.exports = {
