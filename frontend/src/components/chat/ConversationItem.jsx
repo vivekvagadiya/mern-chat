@@ -2,8 +2,6 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Pin, Star, MoreVertical } from 'lucide-react';
-import { getTimeAgo } from '../../mock/data.js';
-import { toggleFavorite, togglePinned } from '../../store/slices/chatSlice.js';
 import { formatChatDate } from '../../utils/helper.js';
 import Avatar from '../common/Avatar.jsx';
 import { useToast } from '../ToastContainer.jsx';
@@ -114,7 +112,7 @@ export default function ConversationItem({ conversation }) {
 
       {/* Hover Actions */}
       <AnimatePresence>
-        {showActions && (
+        {(showActions || isActive) && (
           <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -154,13 +152,13 @@ export default function ConversationItem({ conversation }) {
               <Star size={14} fill={conversation.isFavorite ? 'currentColor' : 'none'} />
             </motion.button>
 
-            <motion.button
+            {/* <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               className="p-1.5 rounded text-dark-text-muted hover:bg-dark-surface-2 transition-colors"
             >
               <MoreVertical size={14} />
-            </motion.button>
+            </motion.button> */}
           </motion.div>
         )}
       </AnimatePresence>
