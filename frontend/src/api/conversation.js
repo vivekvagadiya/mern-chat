@@ -131,3 +131,21 @@ export const deleteGroup = async (chatId) => {
     throw error?.errors?.[0] || error;
   }
 };
+
+export const chatPinnedApi = async (chatId) => {
+  try {
+    const response = await axiosInstance.put(`chat/toggle-pin-status/${chatId}`);
+    return response?.data?.data;
+  } catch (error) {
+    throw error?.errors?.[0] || error;
+  }
+};
+
+export const chatFavoriteApi = async (chatId) => {
+  try {
+    const response = await axiosInstance.put(`chat/toggle-favorite-status/${chatId}`);
+    return response?.data?.data;
+  } catch (error) {
+    throw error?.errors?.[0] || error;
+  }
+};

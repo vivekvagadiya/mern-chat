@@ -43,6 +43,14 @@ const chatSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    isPinned: {
+      type: Boolean,
+      default: false,
+    },
+    isFavorite: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

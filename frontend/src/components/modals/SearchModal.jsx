@@ -74,6 +74,7 @@ export default function SearchModal() {
         await new Promise((resolve) => setTimeout(resolve, 100));
         dispatch(setCurrentConversation(response._id));
         dispatch(setSearchOpen(false));
+        dispatch(fetchConversation());
       } catch (error) {
         toast.error(error.message || 'Failed to create chat');
       }

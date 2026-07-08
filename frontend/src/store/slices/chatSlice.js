@@ -71,19 +71,19 @@ const chatSlice = createSlice({
       }
     },
     togglePinned: (state, action) => {
-      const conversation = state.conversations.find(
-        (c) => c._id === action.payload || c.id === action.payload
-      );
+      const chat = action.payload;
+      const targetId = chat._id || chat.id;
+      const conversation = state.conversations.find((c) => c._id === targetId || c.id === targetId);
       if (conversation) {
-        conversation.isPinned = !conversation.isPinned;
+        conversation.isPinned = chat.isPinned;
       }
     },
     toggleFavorite: (state, action) => {
-      const conversation = state.conversations.find(
-        (c) => c._id === action.payload || c.id === action.payload
-      );
+      const chat = action.payload;
+      const targetId = chat._id || chat.id;
+      const conversation = state.conversations.find((c) => c._id === targetId || c.id === targetId);
       if (conversation) {
-        conversation.isFavorite = !conversation.isFavorite;
+        conversation.isFavorite = chat.isFavorite;
       }
     },
     addReaction: (state, action) => {
@@ -225,9 +225,10 @@ const chatSlice = createSlice({
 
     chatCreated: (state, action) => {
       const chat = action.payload;
+      const targetId = chat._id || chat.id;
 
       const existingChatIndex = state.conversations.findIndex(
-        (c) => c._id === chat._id || c.id === chat.id
+        (c) => c._id === targetId || c.id === targetId
       );
 
       if (existingChatIndex === -1) {
@@ -269,23 +270,21 @@ const chatSlice = createSlice({
     builder.addCase(fetchMessages.fulfilled, (state, action) => {
       state.messagesLoading = false;
       const { chatId, messages, chatInfo, pagination, before } = action.payload;
-      
+
       if (before) {
         // Fetching older messages, prepend them to current messages
         const existingMessages = state.messages[chatId] || [];
-        
+
         // Prevent duplicate messages if any are already present (e.g. from Socket.IO or overlap)
         const existingIds = new Set(existingMessages.map((m) => m._id || m.id));
-        const filteredNewMessages = (messages || []).filter(
-          (m) => !existingIds.has(m._id || m.id)
-        );
-        
+        const filteredNewMessages = (messages || []).filter((m) => !existingIds.has(m._id || m.id));
+
         state.messages[chatId] = [...filteredNewMessages, ...existingMessages];
       } else {
         // Initial fetch, replace messages
         state.messages[chatId] = messages || [];
       }
-      
+
       // Store chat info by chatId
       state.chatInfo[chatId] = chatInfo;
       // Store pagination info by chatId

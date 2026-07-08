@@ -24,6 +24,8 @@ import {
   deleteChat,
   memberRemoved,
   chatCreated,
+  togglePinned,
+  toggleFavorite,
 } from '../store/slices/chatSlice';
 
 export default function SocketProvider({ children }) {
@@ -238,6 +240,15 @@ export default function SocketProvider({ children }) {
           deliveredTo: data.deliveredTo,
         })
       );
+    });
+    socket.on('chat_pinned', (data) => {
+      console.log('chat_pinned', data);
+
+      dispatch(togglePinned(data));
+    });
+    socket.on('chat_favorited', (data) => {
+      console.log('chat_favorited', data);
+      dispatch(toggleFavorite(data));
     });
 
     socket.on('chat_read', (data) => {

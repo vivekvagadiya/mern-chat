@@ -15,6 +15,8 @@ const {
   getGroupChatInfo,
   getFormattedChatById,
   deleteGroup,
+  toggleFavoriteStatus,
+  togglePinStatus,
 } = require("../services/chat.service");
 const socketManager = require("../socket/roomManager");
 const apiResponse = require("../utils/apiResponse");
@@ -355,6 +357,52 @@ const groupChatInfoController = async (req, res) => {
   }
 };
 
+const togglePinStatusController = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { chatId } = req.params;
+    const chat = await togglePinStatus(userId, chatId);
+    const io = req.app.get("io");
+
+    if (io) {
+      const users = chat.participants;
+      users.forEach((user) => {
+        const userSocketId = socketManager.getUserSocketId(user._id.toString());
+
+        if (userSocketId) {
+          io.to(userSocketId).emit("chat_pinned", chat);
+        }
+      });
+    }
+    return apiResponse.success(res, "Chat pinned successfully", chat);
+  } catch (error) {
+    return apiResponse.error(res, error.message);
+  }
+};
+
+const toggleFavoriteStatusController = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { chatId } = req.params;
+    const chat = await toggleFavoriteStatus(userId, chatId);
+    const io = req.app.get("io");
+
+    if (io) {
+      const users = chat.participants;
+      users.forEach((user) => {
+        const userSocketId = socketManager.getUserSocketId(user._id.toString());
+
+        if (userSocketId) {
+          io.to(userSocketId).emit("chat_favorited", chat);
+        }
+      });
+    }
+    return apiResponse.success(res, "Chat favorited successfully", chat);
+  } catch (error) {
+    return apiResponse.error(res, error.message);
+  }
+};
+
 module.exports = {
   addMembersToGroupChatController,
   assignAdminRoleController,
@@ -371,4 +419,6 @@ module.exports = {
   deleteChatController,
   groupChatInfoController,
   deleteGroupController,
+  togglePinStatusController,
+  toggleFavoriteStatusController,
 };

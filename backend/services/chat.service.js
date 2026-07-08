@@ -558,6 +558,35 @@ const deleteGroup = async (userId, chatId) => {
   await Chat.findByIdAndDelete(chatId);
   return { chat, participants };
 };
+
+const togglePinStatus = async (userId, chatId) => {
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    throw new Error("Chat not found");
+  }
+  if (!isParticipant(chat, userId)) {
+    throw new Error("Access denied: Not a participant");
+  }
+
+  chat.isPinned = !chat.isPinned;
+  await chat.save();
+  return getChatById(chatId, userId);
+  s;
+};
+
+const toggleFavoriteStatus = async (userId, chatId) => {
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    throw new Error("Chat not found");
+  }
+  if (!isParticipant(chat, userId)) {
+    throw new Error("Access denied: Not a participant");
+  }
+
+  chat.isFavorite = !chat.isFavorite;
+  await chat.save();
+  return getChatById(chatId, userId);
+};
 module.exports = {
   createDirectChat,
   createGroupChat,
@@ -575,4 +604,6 @@ module.exports = {
   getGroupChatInfo,
   getFormattedChatById,
   deleteGroup,
+  toggleFavoriteStatus,
+  togglePinStatus,
 };
