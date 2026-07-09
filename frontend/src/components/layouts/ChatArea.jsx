@@ -286,7 +286,7 @@ export default function ChatArea() {
                         </div>
                       </div>
                     )}
-                    <MessageBubble message={message} />
+                    <MessageBubble message={message} isNearTop={index < 2} />
                   </motion.div>
                 );
               })

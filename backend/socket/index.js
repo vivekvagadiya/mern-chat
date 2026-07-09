@@ -9,7 +9,9 @@ const {
 const { handleMessageHandlers } = require("./messageHandler");
 
 const initializeSocket = (httpServer) => {
-  const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, "") : "http://localhost:3000";
+  const clientUrl = process.env.CLIENT_URL
+    ? process.env.CLIENT_URL.replace(/\/$/, "")
+    : "http://localhost:3000";
 
   const io = new Server(httpServer, {
     cors: {
@@ -51,15 +53,17 @@ const initializeSocket = (httpServer) => {
     addUserSocket(socket.userId, socket.id, socket.user);
 
     // Send current online users list to the newly connected user
-    getOnlineUsers({ userId: socket.userId }).then(onlineUsers => {
-      socket.emit("online_users", onlineUsers);
-      console.log(
-        `📊 Sent online users list to ${socket.user.name}: ${onlineUsers.length} users`,
-      );
-    }).catch(error => {
-      console.error('Error getting online users:', error);
-      socket.emit("online_users", []);
-    });
+    getOnlineUsers({ userId: socket.userId })
+      .then((onlineUsers) => {
+        socket.emit("online_users", onlineUsers);
+        console.log(
+          `📊 Sent online users list to ${socket.user.name}: ${onlineUsers.length} users`,
+        );
+      })
+      .catch((error) => {
+        console.error("Error getting online users:", error);
+        socket.emit("online_users", []);
+      });
 
     // Notify others that this user is online
     socket.broadcast.emit("user_online", socket.user);

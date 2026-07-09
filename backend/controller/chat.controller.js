@@ -365,14 +365,16 @@ const togglePinStatusController = async (req, res) => {
     const io = req.app.get("io");
 
     if (io) {
-      const users = chat.participants;
-      users.forEach((user) => {
-        const userSocketId = socketManager.getUserSocketId(user._id.toString());
+      const userSocketId = socketManager.getUserSocketId(userId.toString());
+      io.to(userSocketId).emit("chat_pinned", chat);
+      // const users = chat.participants;
+      // users.forEach((user) => {
+      //   const userSocketId = socketManager.getUserSocketId(user._id.toString());
 
-        if (userSocketId) {
-          io.to(userSocketId).emit("chat_pinned", chat);
-        }
-      });
+      //   if (userSocketId) {
+      //     io.to(userSocketId).emit("chat_pinned", chat);
+      //   }
+      // });
     }
     return apiResponse.success(res, "Chat pinned successfully", chat);
   } catch (error) {
@@ -388,14 +390,17 @@ const toggleFavoriteStatusController = async (req, res) => {
     const io = req.app.get("io");
 
     if (io) {
-      const users = chat.participants;
-      users.forEach((user) => {
-        const userSocketId = socketManager.getUserSocketId(user._id.toString());
+      const userSocketId = socketManager.getUserSocketId(userId.toString());
+      io.to(userSocketId).emit("chat_favorited", chat);
 
-        if (userSocketId) {
-          io.to(userSocketId).emit("chat_favorited", chat);
-        }
-      });
+      // const user = chat.participants;
+      // users.forEach((user) => {
+      //   const userSocketId = socketManager.getUserSocketId(user._id.toString());
+
+      //   if (userSocketId) {
+      //     io.to(userSocketId).emit("chat_favorited", chat);
+      //   }
+      // });
     }
     return apiResponse.success(res, "Chat favorited successfully", chat);
   } catch (error) {
