@@ -114,6 +114,17 @@ const chatSlice = createSlice({
         }
       }
     },
+    setReactions: (state, action) => {
+      const { conversationId, messageId, reactions } = action.payload;
+      const idStr =
+        typeof conversationId === 'object' && conversationId !== null
+          ? conversationId._id || conversationId.id
+          : conversationId;
+      const message = state.messages[idStr]?.find((m) => m._id === messageId || m.id === messageId);
+      if (message) {
+        message.reactions = reactions;
+      }
+    },
 
     clearChat: (state, action) => {
       const chatId = action.payload;
@@ -315,6 +326,7 @@ export const {
   togglePinned,
   toggleFavorite,
   addReaction,
+  setReactions,
   updateChat,
   updateMessageStatus,
   setTyping,

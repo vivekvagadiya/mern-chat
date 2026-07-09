@@ -61,9 +61,15 @@ const typingSchema = z.object({
   chatId: objectIdSchema,
 });
 
+const reactionSchema = z.object({
+  messageId: objectIdSchema,
+  emoji: z.string().min(1, "Emoji is required"),
+});
+
 module.exports = {
   joinChatSchema,
   newMessageSchema,
   markReadSchema,
   typingSchema,
+  reactionSchema,
 };

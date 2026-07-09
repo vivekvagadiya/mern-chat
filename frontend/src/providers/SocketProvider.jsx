@@ -26,6 +26,7 @@ import {
   chatCreated,
   togglePinned,
   toggleFavorite,
+  setReactions,
 } from '../store/slices/chatSlice';
 
 export default function SocketProvider({ children }) {
@@ -137,6 +138,18 @@ export default function SocketProvider({ children }) {
     socket.on('chat_deleted', (data) => {
       console.log('chat deleted', data);
       dispatch(deleteChat(data._id));
+    });
+
+    socket.on('reaction_updated', (data) => {
+      console.log('reaction_updated', data);
+      const { chatId, messageId, reactions } = data;
+      dispatch(
+        setReactions({
+          conversationId: chatId,
+          messageId,
+          reactions,
+        })
+      );
     });
 
     socket.on('message_received', (message) => {

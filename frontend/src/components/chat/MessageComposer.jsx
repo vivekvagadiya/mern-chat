@@ -109,10 +109,18 @@ export default function MessageComposer({ conversationId }) {
           dispatch(updateChat({ chatId: conversationId, lastMessage: result }));
         }
       } else {
-        // Just text message
+        // Just text message via socket
+        socketService.sendMessage({
+          chatId: conversationId,
+          content: message.trim(),
+          type: 'text',
+        });
+
+        // Commented out REST API message sending to keep it in place
+        /*
         const result = await dispatch(
           sendMessageAction({
-            chatId: conversationId, // Use chatId to match backend
+            chatId: conversationId,
             content: message.trim(),
             type: 'text',
           })
@@ -120,6 +128,10 @@ export default function MessageComposer({ conversationId }) {
 
         dispatch(addMessage({ conversationId, message: result }));
         dispatch(updateChat({ chatId: conversationId, lastMessage: result }));
+        */
+
+        setMessage('');
+        setIsTyping(false);
       }
 
       setMessage('');
