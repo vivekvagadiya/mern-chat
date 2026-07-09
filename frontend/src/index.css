@@ -171,3 +171,12 @@ button, [role="button"] {
 :disabled {
   @apply opacity-50 cursor-not-allowed;
 }
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
