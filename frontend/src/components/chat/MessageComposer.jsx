@@ -20,6 +20,7 @@ export default function MessageComposer({ conversationId }) {
   const [isTyping, setIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const { user } = useSelector((state) => state.auth);
+  const { mobileView } = useSelector((state) => state.ui);
 
   const socket = socketService.getSocket();
 
@@ -173,8 +174,6 @@ export default function MessageComposer({ conversationId }) {
     });
   };
 
-  const EMOJIS = ['😀', '😂', '😍', '🔥', '✨', '👍', '🎉', '🚀', '💯', '😎', '🙌', '❤️'];
-
   return (
     <div className="flex flex-col gap-2 relative">
       <input
@@ -268,7 +267,7 @@ export default function MessageComposer({ conversationId }) {
           </div>
 
           {/* Emoji Picker */}
-          <div className="relative" ref={emojiPickerRef}>
+          <div className="static md:relative" ref={emojiPickerRef}>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -286,11 +285,13 @@ export default function MessageComposer({ conversationId }) {
                   initial={{ opacity: 0, scale: 0.9, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: -10 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="absolute bottom-full left-0 mb-2 z-30 shadow-elevation-2 overflow-hidden rounded-lg"
+                  className="absolute bottom-full left-0 right-0 md:left-0 md:right-auto mb-2 z-30 shadow-elevation-2 overflow-hidden rounded-lg"
                 >
                   <EmojiPicker
                     theme="dark"
                     emojiStyle="native"
+                    width={mobileView ? '100%' : '350px'}
+                    height={mobileView ? 320 : 400}
                     onEmojiClick={(emojiObject) => {
                       setMessage((prev) => prev + emojiObject.emoji);
                     }}

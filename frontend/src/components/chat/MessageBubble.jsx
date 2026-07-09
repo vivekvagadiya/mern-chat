@@ -18,13 +18,12 @@ import Avatar from '../common/Avatar.jsx';
 import { MessageAttachment } from './MessageAttachment.jsx';
 import EmojiPicker from 'emoji-picker-react';
 
-const EMOJI_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🎉', '🚀', '✨'];
-
 export default function MessageBubble({ message }) {
   const dispatch = useDispatch();
   const [showActions, setShowActions] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const { user } = useSelector((state) => state.auth);
+  const { mobileView } = useSelector((state) => state.ui);
   const isOwn = (message?.senderId?._id || message?.senderId) === (user?._id || user?.id);
 
   const handleAddReaction = (emoji) => {
@@ -170,13 +169,15 @@ export default function MessageBubble({ message }) {
                 initial={{ opacity: 0, scale: 0.8, y: -10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                className={`absolute ${isOwn ? 'right-0' : 'left-0'} bottom-full mb-2 z-30 shadow-elevation-3 overflow-hidden rounded-lg`}
+                className={`absolute ${isOwn ? 'right-0' : 'left-[-44px] md:left-0'} bottom-full mb-2 z-30 shadow-elevation-3 overflow-hidden rounded-lg`}
               >
                 <EmojiPicker
                   theme="dark"
                   emojiStyle="native"
+                  width={mobileView ? 280 : 320}
+                  height={mobileView ? 300 : 380}
                   onEmojiClick={(emojiObject) => {
-                    handleAddReaction(emojiObject.emoji);
+                    // handleAddReaction(emojiObject.emoji);
                   }}
                 />
               </motion.div>

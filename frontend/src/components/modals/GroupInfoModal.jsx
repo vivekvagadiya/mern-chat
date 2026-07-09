@@ -294,7 +294,9 @@ export default function GroupInfoModal({ isOpen, onClose, conversation }) {
                                 src={user.avatar}
                                 rounded="rounded-full"
                               />
-                              <span className="text-xs text-dark-text">{user.name}</span>
+                              <span className="text-xs text-dark-text truncate max-w-[80px] sm:max-w-[120px]">
+                                {user.name}
+                              </span>
                               <button
                                 className="p-0.5 hover:bg-dark-surface-2 rounded-full transition-colors"
                                 onClick={() =>
@@ -351,18 +353,20 @@ export default function GroupInfoModal({ isOpen, onClose, conversation }) {
                                       : 'hover:bg-dark-surface-2 border-transparent hover:border-dark-border cursor-pointer'
                                 }`}
                               >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
                                   <Avatar
                                     src={user.avatar}
                                     alt={user.username}
                                     size="w-10 h-10"
                                     rounded="rounded-full"
                                   />
-                                  <div className="text-left">
-                                    <p className="text-sm font-medium text-dark-text">
+                                  <div className="text-left min-w-0 flex-1">
+                                    <p className="text-sm font-medium text-dark-text truncate">
                                       {user.username}
                                     </p>
-                                    <p className="text-xs text-dark-text-muted">{user.email}</p>
+                                    <p className="text-xs text-dark-text-muted truncate">
+                                      {user.email}
+                                    </p>
                                   </div>
                                 </div>
                                 {isAlreadyMember ? (
@@ -493,7 +497,7 @@ export default function GroupInfoModal({ isOpen, onClose, conversation }) {
                               key={participant._id || participant.id}
                               className="flex items-center justify-between p-2 rounded-lg bg-dark-surface-2 border border-dark-border/50 hover:border-dark-border transition-colors relative animate-fade-in"
                             >
-                              <div className="flex items-center gap-3 text-left">
+                              <div className="flex items-center gap-3 text-left min-w-0 flex-1">
                                 <Avatar
                                   src={participant.avatar}
                                   alt={participant.username || participant.name || 'User'}
@@ -502,12 +506,12 @@ export default function GroupInfoModal({ isOpen, onClose, conversation }) {
                                   userId={participant._id || participant.id}
                                   showStatus={true}
                                 />
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-sm font-medium text-dark-text">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                                    <p className="text-sm font-medium text-dark-text truncate max-w-[120px] sm:max-w-[180px]">
                                       {participant.username || participant.name || 'Unknown User'}
                                     </p>
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex items-center gap-1 flex-shrink-0">
                                       {participant.isCreator && (
                                         <span className="text-[10px] uppercase tracking-wider bg-warning/20 text-warning px-1.5 py-0.5 rounded font-semibold">
                                           Owner
@@ -521,7 +525,7 @@ export default function GroupInfoModal({ isOpen, onClose, conversation }) {
                                     </div>
                                   </div>
                                   {(participant.email || participant.status) && (
-                                    <p className="text-xs text-dark-text-muted text-left">
+                                    <p className="text-xs text-dark-text-muted text-left truncate max-w-[150px] sm:max-w-[220px]">
                                       {participant.email || participant.status}
                                     </p>
                                   )}
@@ -577,6 +581,7 @@ export default function GroupInfoModal({ isOpen, onClose, conversation }) {
                                           onClick={() =>
                                             handleRemoveMember(participant._id || participant.id)
                                           }
+                                          // disabled={info.parti}
                                           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-error hover:bg-error/10 transition-colors text-left"
                                         >
                                           <UserMinus size={14} />

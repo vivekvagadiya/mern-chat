@@ -126,13 +126,27 @@ export default function ChatArea() {
 
   if (!currentConversation) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-dark-surface via-dark-bg to-dark-surface-alt">
-        <div className="text-center">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto mb-4">
-            <span className="text-4xl">💬</span>
+      <div className="flex-1 flex flex-col bg-gradient-to-br from-dark-surface via-dark-bg to-dark-surface-alt overflow-hidden">
+        {/* Header for mobile/no-chat view to allow reopening the sidebar */}
+        {mobileView && (
+          <div className="flex items-center p-4 border-b border-dark-border backdrop-blur-md bg-dark-surface/50 sticky top-0 z-10">
+            <button
+              onClick={() => dispatch(setSidebarOpen(true))}
+              className="p-2 hover:bg-dark-surface-alt rounded-lg transition-colors text-dark-text mr-3"
+            >
+              <Menu size={20} />
+            </button>
+            <h2 className="font-semibold text-dark-text">Chats</h2>
           </div>
-          <h2 className="text-xl font-semibold text-dark-text mb-2">Select a conversation</h2>
-          <p className="text-dark-text-muted">Choose a chat to start messaging</p>
+        )}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mx-auto mb-4">
+              <span className="text-4xl">💬</span>
+            </div>
+            <h2 className="text-xl font-semibold text-dark-text mb-2">Select a conversation</h2>
+            <p className="text-dark-text-muted">Choose a chat to start messaging</p>
+          </div>
         </div>
       </div>
     );
