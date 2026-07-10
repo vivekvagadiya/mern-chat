@@ -80,7 +80,7 @@ export default function ConversationItem({ conversation }) {
             <h3
               className={`font-medium text-sm truncate ${isActive ? 'text-primary' : 'text-dark-text'}`}
             >
-              {conversation.name}
+              {conversation?.name}
             </h3>
             <span className="text-xs text-dark-text-muted flex-shrink-0">
               {formatChatDate(conversation.updatedAt)}
@@ -92,7 +92,9 @@ export default function ConversationItem({ conversation }) {
               <span className="text-primary font-medium italic animate-pulse">typing...</span>
             ) : (
               <span className="text-dark-text-muted">
-                {conversation?.lastMessage?.content || 'No messages yet'}
+                {conversation?.lastMessage?.content?.length > 25
+                  ? conversation?.lastMessage?.content?.substring(0, 25) + '...'
+                  : conversation?.lastMessage?.content || 'No messages yet'}
               </span>
             )}
           </p>

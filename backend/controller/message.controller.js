@@ -1,7 +1,7 @@
 const messageService = require("../services/message.service");
 const apiResponse = require("../utils/apiResponse");
 const Chat = require("../models/chat.model");
-const socketManager = require('../socket/roomManager');
+const socketManager = require("../socket/roomManager");
 const uploadToCloudinary = require("./upload.cloudinary");
 
 const sendMessageController = async (req, res) => {
@@ -10,16 +10,30 @@ const sendMessageController = async (req, res) => {
     let { chatId, content, type, mediaUrl } = req.body;
 
     if (req.file) {
-      const result = await uploadToCloudinary(req.file.buffer, "chat_attachments");
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        "chat_attachments",
+      );
       mediaUrl = result.secure_url;
-      const resourceType = result.resource_type;
-      if (resourceType === 'image') type = 'image';
-      else if (resourceType === 'video') type = 'video';
-      else type = 'file';
+      console.log("result", result);
+
+      if (req.file.mimetype.startsWith("image/")) {
+        type = "image";
+      } else if (req.file.mimetype.startsWith("video/")) {
+        type = "video";
+      } else if (req.file.mimetype.startsWith("audio/")) {
+        type = "audio";
+      } else {
+        type = "file";
+      }
     }
 
-    if (type !== 'text' && !mediaUrl) {
-      return apiResponse.error(res, "Media URL or file is required for non-text messages", 400);
+    if (type !== "text" && !mediaUrl) {
+      return apiResponse.error(
+        res,
+        "Media URL or file is required for non-text messages",
+        400,
+      );
     }
     const message = await messageService.sendMessage(chatId, userId, {
       content,
@@ -37,9 +51,7 @@ const sendMessageController = async (req, res) => {
         // Send to each participant individually
         chat.participants.forEach((participant) => {
           const participantId = participant._id.toString();
-          const userSocketId = socketManager.getUserSocketId(
-            participantId,
-          );
+          const userSocketId = socketManager.getUserSocketId(participantId);
 
           if (userSocketId) {
             io.to(userSocketId).emit("message_received", message);
