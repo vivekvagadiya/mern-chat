@@ -28,6 +28,7 @@ import {
   toggleFavorite,
   setReactions,
 } from '../store/slices/chatSlice';
+import { useToast } from '../components/ToastContainer';
 
 export default function SocketProvider({ children }) {
   const dispatch = useDispatch();
@@ -36,6 +37,7 @@ export default function SocketProvider({ children }) {
   const { currentConversationId } = useSelector((state) => state.chat);
 
   const currentConversationIdRef = useRef(currentConversationId);
+  const toast = useToast();
 
   useEffect(() => {
     currentConversationIdRef.current = currentConversationId;
@@ -83,7 +85,10 @@ export default function SocketProvider({ children }) {
       dispatch(setSocket(socket));
 
       if (currentConversationIdRef.current) {
-        console.log('🏠 Rejoining chat room on connect/reconnect:', currentConversationIdRef.current);
+        console.log(
+          '🏠 Rejoining chat room on connect/reconnect:',
+          currentConversationIdRef.current
+        );
         socketService.joinRoom(currentConversationIdRef.current);
       }
     });
@@ -146,6 +151,21 @@ export default function SocketProvider({ children }) {
       dispatch(clearChat(data._id));
     });
 
+    socket.on('validation_error', (data) => {
+      console.log('validation_error', data);
+      const errorMessage =
+        data?.errors && data.errors.length > 0
+          ? `${data.message}: ${data.errors.map((e) => e.message).join(', ')}`
+          : data?.message || 'Validation error occurred';
+      toast.error(errorMessage);
+    });
+
+    socket.on('error', (error) => {
+      console.error('Socket error:', error);
+      const errorMessage = error?.message || error || 'A socket error occurred';
+      toast.error(errorMessage);
+    });
+
     socket.on('chat_deleted', (data) => {
       console.log('chat deleted', data);
       dispatch(deleteChat(data._id));
@@ -176,7 +196,11 @@ export default function SocketProvider({ children }) {
       // If the user is actively viewing this chat and the message is from another user, mark as read on backend via socket
       const currentUserId = user?._id || user?.id;
       const senderIdStr = message?.senderId?._id || message?.senderId;
-      if (currentUserId && senderIdStr !== currentUserId && message.chatId === currentConversationId) {
+      if (
+        currentUserId &&
+        senderIdStr !== currentUserId &&
+        message.chatId === currentConversationId
+      ) {
         socket.emit('mark_read', { messageId: message._id || message.id });
       }
 
@@ -225,11 +249,6 @@ export default function SocketProvider({ children }) {
         })
       );
     });
-
-    socket.on('validation_error', (error) => {
-      console.error('Socket validation error:', error);
-    });
-
     socket.on('message_delivered', (data) => {
       console.log('message_delivered', data);
       dispatch(
@@ -286,9 +305,7 @@ export default function SocketProvider({ children }) {
       dispatch(updateUser(user));
     });
 
-    socket.on('error', (error) => {
-      console.error('Socket error:', error);
-    });
+
 
     // Add debugging for all events
     socket.onAny((eventName, ...args) => {

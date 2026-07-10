@@ -10,13 +10,13 @@ import { ToastProvider, useToast } from './components/ToastContainer.jsx';
 import { setToastHandler } from './api/axios.js';
 import { useSelector } from 'react-redux';
 import { AuthInitializer } from './components/AuthInitializer.jsx';
+import AppLoader from './components/common/AppLoader.jsx';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, isInitialized } = useSelector((s) => s.auth);
 
   if (!isInitialized) {
-    // return <AppLoader />;
-    return <div>loading111...</div>;
+    return <AppLoader />;
   }
 
   return isAuthenticated ? children : <Navigate to="/login" replace />;
@@ -26,8 +26,7 @@ function PublicRoute({ children }) {
   const { isAuthenticated, isInitialized } = useSelector((s) => s.auth);
 
   if (!isInitialized) {
-    // return <ChatWindowSkeleton />;
-    return <div>loading...</div>;
+    return <AppLoader />;
   }
 
   return isAuthenticated ? <Navigate to="/" replace /> : children;

@@ -24,12 +24,9 @@ const newMessageSchema = z
   .object({
     chatId: objectIdSchema,
 
-    content: z.string().trim().max(1000).optional(),
+    content: z.string().trim().max(500).optional(),
 
-    type: z
-      .enum(["text", "image", "file"])
-      .optional()
-      .default("text"),
+    type: z.enum(["text", "image", "file"]).optional().default("text"),
 
     mediaUrl: z.string().url("Invalid media URL").optional().nullable(),
   })
@@ -44,7 +41,7 @@ const newMessageSchema = z
     {
       message: "Content is required for text messages",
       path: ["content"],
-    }
+    },
   );
 
 /**

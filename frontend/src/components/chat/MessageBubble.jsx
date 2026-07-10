@@ -111,7 +111,7 @@ export default function MessageBubble({ message, isNearTop }) {
           >
             <MessageAttachment message={message} />
             {message.content && (
-              <p className="text-sm leading-relaxed break-words max-w-xs">{message.content}</p>
+              <p className="text-sm leading-relaxed break-words whitespace-pre-wrap max-w-xs sm:max-w-sm md:max-w-md w-full mt-1.5">{message.content}</p>
             )}
 
             {/* Timestamp & Status */}

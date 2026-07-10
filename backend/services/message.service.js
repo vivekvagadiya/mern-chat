@@ -17,8 +17,9 @@ const formatReactions = (reactions) => {
 };
 
 const getChatOrThrow = async (chatId) => {
-  const chat = await Chat.findById(chatId)
-    .select("participants type isActive lastMessage");
+  const chat = await Chat.findById(chatId).select(
+    "participants type isActive lastMessage",
+  );
 
   if (!chat) {
     throw new Error("Chat not found");
@@ -32,12 +33,12 @@ const getChatOrThrow = async (chatId) => {
 };
 
 const isParticipant = (chat, userId) => {
-  return chat.participants.some(
-    (participant) => {
-      const participantId = participant._id ? participant._id.toString() : participant.toString();
-      return participantId === userId.toString();
-    }
-  );
+  return chat.participants.some((participant) => {
+    const participantId = participant._id
+      ? participant._id.toString()
+      : participant.toString();
+    return participantId === userId.toString();
+  });
 };
 const sendMessage = async (
   chatId,
@@ -48,9 +49,9 @@ const sendMessage = async (
   if (!content || content.trim().length === 0) {
     throw new Error("Message content is required");
   }
-  
-  if (content.length > 1000) {
-    throw new Error("Message content cannot exceed 1000 characters");
+
+  if (content.length > 500) {
+    throw new Error("Message content cannot exceed 500 characters");
   }
 
   const chat = await getChatOrThrow(chatId);
@@ -81,9 +82,9 @@ const sendMessage = async (
       $set: {
         lastReadMessage: message._id,
         lastReadAt: new Date(),
-      }
+      },
     },
-    { upsert: true }
+    { upsert: true },
   );
 
   // Return populated message
@@ -106,9 +107,9 @@ const getMessages = async (chatId, userId, before = null, limit = 20) => {
         $set: {
           lastReadMessage: chat.lastMessage,
           lastReadAt: new Date(),
-        }
+        },
       },
-      { upsert: true }
+      { upsert: true },
     );
   } else {
     await ChatMember.findOneAndUpdate(
@@ -116,9 +117,9 @@ const getMessages = async (chatId, userId, before = null, limit = 20) => {
       {
         $set: {
           lastReadAt: new Date(),
-        }
+        },
       },
-      { upsert: true }
+      { upsert: true },
     );
   }
 
@@ -127,14 +128,16 @@ const getMessages = async (chatId, userId, before = null, limit = 20) => {
 
   const query = {
     chatId: chatId,
-    isDeleted: { $ne: true } // Exclude deleted messages
+    isDeleted: { $ne: true }, // Exclude deleted messages
   };
 
   if (before) {
     if (mongoose.Types.ObjectId.isValid(before)) {
       query._id = { $lt: new mongoose.Types.ObjectId(before) };
     } else {
-      console.warn(`Invalid before cursor provided: ${before}. Loading latest messages instead.`);
+      console.warn(
+        `Invalid before cursor provided: ${before}. Loading latest messages instead.`,
+      );
     }
   }
 
@@ -151,7 +154,10 @@ const getMessages = async (chatId, userId, before = null, limit = 20) => {
 
   // The cursor for the next page is the ID of the oldest message in our current result batch
   // Since we sorted descending, the last element of the sliced batch is the oldest.
-  const nextCursor = slicedMessages.length > 0 ? slicedMessages[slicedMessages.length - 1]._id.toString() : null;
+  const nextCursor =
+    slicedMessages.length > 0
+      ? slicedMessages[slicedMessages.length - 1]._id.toString()
+      : null;
 
   const formattedMessages = slicedMessages.map((m) => ({
     ...m,
@@ -190,16 +196,20 @@ const markAsRead = async (messageId, userId) => {
 
   // Update ChatMember's lastReadMessage if the message is newer than current lastReadMessage
   const member = await ChatMember.findOne({ chatId: message.chatId, userId });
-  if (!member || !member.lastReadMessage || messageId > member.lastReadMessage.toString()) {
+  if (
+    !member ||
+    !member.lastReadMessage ||
+    messageId > member.lastReadMessage.toString()
+  ) {
     await ChatMember.findOneAndUpdate(
       { chatId: message.chatId, userId },
       {
         $set: {
           lastReadMessage: message._id,
           lastReadAt: new Date(),
-        }
+        },
       },
-      { upsert: true }
+      { upsert: true },
     );
   }
 
@@ -220,9 +230,9 @@ const markChatAsRead = async (chatId, userId) => {
         $set: {
           lastReadMessage: chat.lastMessage,
           lastReadAt: new Date(),
-        }
+        },
       },
-      { upsert: true }
+      { upsert: true },
     );
   } else {
     await ChatMember.findOneAndUpdate(
@@ -230,15 +240,15 @@ const markChatAsRead = async (chatId, userId) => {
       {
         $set: {
           lastReadAt: new Date(),
-        }
+        },
       },
-      { upsert: true }
+      { upsert: true },
     );
   }
 
   return {
     markedCount: 1,
-    message: "Chat marked as read"
+    message: "Chat marked as read",
   };
 };
 
@@ -249,11 +259,11 @@ const editMessage = async (messageId, userId, content) => {
   }
 
   const message = await Message.findById(messageId);
-  
+
   if (!message) {
     throw new Error("Message not found");
   }
-  
+
   if (message.isDeleted) {
     throw new Error("Cannot edit deleted message");
   }
@@ -270,23 +280,24 @@ const editMessage = async (messageId, userId, content) => {
 
   return await Message.findByIdAndUpdate(
     messageId,
-    { 
+    {
       content: content.trim(),
       isEdited: true,
-      editedAt: new Date()
+      editedAt: new Date(),
     },
-    { new: true }
-  ).populate("senderId", "username avatar")
-   .select("-__v");
+    { new: true },
+  )
+    .populate("senderId", "username avatar")
+    .select("-__v");
 };
 
 const deleteMessage = async (messageId, userId) => {
   const message = await Message.findById(messageId);
-  
+
   if (!message) {
     throw new Error("Message not found");
   }
-  
+
   if (message.isDeleted) {
     throw new Error("Message already deleted");
   }
@@ -308,7 +319,7 @@ const deleteMessage = async (messageId, userId) => {
       deletedAt: new Date(),
       content: "This message has been deleted", // Optional: clear content
     },
-    { new: true }
+    { new: true },
   ).select("-__v");
 };
 
@@ -349,7 +360,7 @@ const getUnreadCount = async (chatId, userId) => {
   const query = {
     chatId: chatId,
     senderId: { $ne: userId },
-    isDeleted: { $ne: true }
+    isDeleted: { $ne: true },
   };
 
   if (member && member.lastReadMessage) {
@@ -373,7 +384,7 @@ const addMessageReaction = async (messageId, userId, emoji) => {
 
   // Find if this user already reacted with this emoji
   const existingIndex = message.reactions.findIndex(
-    (r) => r.userId.toString() === userId.toString() && r.emoji === emoji
+    (r) => r.userId.toString() === userId.toString() && r.emoji === emoji,
   );
 
   if (existingIndex > -1) {

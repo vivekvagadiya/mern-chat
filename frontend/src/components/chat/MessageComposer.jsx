@@ -6,9 +6,11 @@ import { addMessage, updateChat } from '../../store/slices/chatSlice.js';
 import { sendMessageAction } from '../../store/actions/message.actions.js';
 import socketService from '../../services/socket.service.js';
 import EmojiPicker from 'emoji-picker-react';
+import { useToast } from '../ToastContainer.jsx';
 
 export default function MessageComposer({ conversationId }) {
   const dispatch = useDispatch();
+  const toast = useToast();
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
@@ -81,10 +83,20 @@ export default function MessageComposer({ conversationId }) {
   }, [message, conversationId]);
 
   const handleSendMessage = async () => {
+    if (!conversationId) {
+      toast.error('No active conversation selected');
+      return;
+    }
+
     const hasText = message.trim().length > 0;
     const hasAttachments = attachments.length > 0;
 
     if (!hasText && !hasAttachments) return;
+
+    if (hasText && message.trim().length > 500) {
+      toast.error('Message cannot exceed 500 characters');
+      return;
+    }
 
     setIsSending(true);
     // Immediately tell others we stopped typing while sending
@@ -167,14 +179,25 @@ export default function MessageComposer({ conversationId }) {
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
-    const newAttachments = files.map((file) => ({
-      id: `${file.name}_${Date.now()}`,
-      name: file.name,
-      file: file,
-      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
-    }));
+    const validAttachments = [];
+    const maxFileSize = 5 * 1024 * 1024; // 5MB limit
 
-    setAttachments((prev) => [...prev, ...newAttachments]);
+    for (const file of files) {
+      if (file.size > maxFileSize) {
+        toast.error(`File "${file.name}" is too large. Maximum size is 5MB.`);
+        continue;
+      }
+      validAttachments.push({
+        id: `${file.name}_${Date.now()}`,
+        name: file.name,
+        file: file,
+        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+      });
+    }
+
+    if (validAttachments.length > 0) {
+      setAttachments((prev) => [...prev, ...validAttachments]);
+    }
     e.target.value = ''; // Reset input
   };
 
@@ -324,6 +347,7 @@ export default function MessageComposer({ conversationId }) {
           }}
           disabled={isSending}
           onKeyDown={handleKeyDown}
+          maxLength={500}
           placeholder="Type a message... (Shift+Enter for new line)"
           className="flex-1 bg-transparent text-sm text-dark-text placeholder-dark-text-muted resize-none outline-none max-h-30 min-h-10"
           rows="1"
@@ -373,6 +397,12 @@ export default function MessageComposer({ conversationId }) {
           💬 Typing...
         </motion.p>
       )} */}
+      {/* Character Counter */}
+      {message.length > 800 && (
+        <span className="absolute -top-6 right-3 text-[10px] text-dark-text-muted bg-dark-surface-2 border border-dark-border px-1.5 py-0.5 rounded shadow">
+          {message.length} / 500
+        </span>
+      )}
     </div>
   );
 }
