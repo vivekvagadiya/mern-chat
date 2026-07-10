@@ -10,7 +10,7 @@ const { handleMessageHandlers } = require("./messageHandler");
 
 const initializeSocket = (httpServer) => {
   const clientUrl = process.env.CLIENT_URL
-    ? process.env.CLIENT_URL.replace(/\/$/, "")
+    ? process.env.CLIENT_URL
     : "http://localhost:3000";
 
   const io = new Server(httpServer, {

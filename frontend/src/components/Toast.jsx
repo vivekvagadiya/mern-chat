@@ -78,7 +78,7 @@ const Toast = ({ toast, onRemove }) => {
           exit={{ opacity: 0, y: -50, scale: 0.95 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
           className={`
-            relative w-full max-w-sm mx-auto mb-4
+            relative w-full mx-auto mb-4
             bg-gradient-to-r ${type.bgColor}
             backdrop-blur-xl
             border ${type.borderColor}

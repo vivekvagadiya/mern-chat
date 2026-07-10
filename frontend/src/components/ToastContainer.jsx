@@ -95,7 +95,7 @@ export const ToastProvider = ({ children }) => {
 // Toast container component
 const ToastContainer = ({ toasts, onRemove }) => {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full">
+    <div className="fixed top-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 space-y-2">
       {toasts.map((toast) => (
         <Toast key={toast.id} toast={toast} onRemove={onRemove} />
       ))}

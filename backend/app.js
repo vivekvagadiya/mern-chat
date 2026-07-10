@@ -11,7 +11,9 @@ const authRoutes = require("./routes/auth.routes");
 const chatRoutes = require("./routes/chat.routes");
 const messageRoutes = require("./routes/message.routes");
 
-const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, "") : "http://localhost:5173";
+const clientUrl = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL
+  : "http://localhost:3000";
 
 app.use(
   cors({

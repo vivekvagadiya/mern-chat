@@ -588,34 +588,25 @@ const ProfilePage = () => {
                   {/* Content */}
                   <div className="p-6">
                     {/* Avatar Preview */}
-                    <div className="flex justify-center mb-6">
-                      <div className="relative">
-                        <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20">
-                          {tempAvatarPreview ? (
-                            <img
-                              src={tempAvatarPreview}
-                              alt="New avatar preview"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                              <User size={48} className="text-primary" />
-                            </div>
-                          )}
-                        </div>
+                    <div className="flex flex-col items-center justify-center mb-6">
+                      <Avatar
+                        size="w-32 h-32"
+                        src={tempAvatarPreview}
+                        fallback=""
+                        rounded={'rounded-full'}
+                      />
 
-                        {/* File info */}
-                        {selectedAvatarFile && (
-                          <div className="mt-4 text-center">
-                            <p className="text-sm text-dark-text font-medium">
-                              {selectedAvatarFile.name}
-                            </p>
-                            <p className="text-xs text-dark-text-muted">
-                              {(selectedAvatarFile.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                      {/* File info */}
+                      {selectedAvatarFile && (
+                        <div className="mt-4 text-center">
+                          <p className="text-sm text-dark-text font-medium">
+                            {selectedAvatarFile.name}
+                          </p>
+                          <p className="text-xs text-dark-text-muted">
+                            {(selectedAvatarFile.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Action Buttons */}
