@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchConversation } from '../store/actions/conversation.actions';
@@ -34,6 +34,12 @@ export default function SocketProvider({ children }) {
 
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const { currentConversationId } = useSelector((state) => state.chat);
+
+  const currentConversationIdRef = useRef(currentConversationId);
+
+  useEffect(() => {
+    currentConversationIdRef.current = currentConversationId;
+  }, [currentConversationId]);
 
   // Request notification permission on mount
   useEffect(() => {
@@ -75,6 +81,11 @@ export default function SocketProvider({ children }) {
 
       dispatch(setConnected(true));
       dispatch(setSocket(socket));
+
+      if (currentConversationIdRef.current) {
+        console.log('🏠 Rejoining chat room on connect/reconnect:', currentConversationIdRef.current);
+        socketService.joinRoom(currentConversationIdRef.current);
+      }
     });
 
     socket.on('disconnect', () => {
@@ -285,18 +296,17 @@ export default function SocketProvider({ children }) {
     });
 
     // Add socket connection status monitoring
-    setInterval(() => {
+    const statusInterval = setInterval(() => {
       if (socket) {
         console.log('🔌 Socket status:', {
           connected: socket.connected,
           id: socket.id,
-          rooms: Array.from(socket.rooms || []),
-          userId: socket.userId,
         });
       }
     }, 10000);
 
     return () => {
+      clearInterval(statusInterval);
       socketService.disconnect();
     };
   }, [isAuthenticated]);
