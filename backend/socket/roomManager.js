@@ -19,32 +19,40 @@ const broadcastToChat = (io, chatId, event, data, excludeSocket = null) => {
 };
 
 const addUserSocket = (userId, socketId, user) => {
-  userSocketMap.set(userId, {
-    socketId,
-    user: {
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      avatar: user.avatar,
-      status: user.status || "online",
-    },
-    connectedAt: new Date(),
-  });
-  console.log(`✅ User ${user.username} added to online users`);
+  let userInfo = userSocketMap.get(userId);
+  if (!userInfo) {
+    userInfo = {
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        avatar: user.avatar,
+        status: user.status || "online",
+      },
+      socketIds: new Set(),
+      connectedAt: new Date(),
+    };
+    userSocketMap.set(userId, userInfo);
+  }
+  userInfo.socketIds.add(socketId);
+  console.log(`✅ User ${user.username} added/updated in online users. Sockets: ${userInfo.socketIds.size}`);
 };
 
-const removeUserSocket = (userId) => {
+const removeUserSocket = (userId, socketId) => {
   const userInfo = userSocketMap.get(userId);
   if (userInfo) {
-    userSocketMap.delete(userId);
-    return userInfo.user;
+    userInfo.socketIds.delete(socketId);
+    console.log(`❌ Removed socket ${socketId} for user ${userInfo.user.username}. Remaining: ${userInfo.socketIds.size}`);
+    if (userInfo.socketIds.size === 0) {
+      userSocketMap.delete(userId);
+      return userInfo.user;
+    }
   }
   return null;
 };
 
 const getUserSocketId = (userId) => {
-  const userInfo = userSocketMap.get(userId);
-  return userInfo ? userInfo.socketId : null;
+  return isUserOnline(userId) ? `user_${userId}` : null;
 };
 
 const getOnlineUsers = async ({ userId = null }) => {
@@ -94,7 +102,8 @@ const getOnlineUsers = async ({ userId = null }) => {
 };
 
 const isUserOnline = (userId) => {
-  return userSocketMap.has(userId);
+  const userInfo = userSocketMap.get(userId);
+  return userInfo && userInfo.socketIds.size > 0;
 };
 
 module.exports = {

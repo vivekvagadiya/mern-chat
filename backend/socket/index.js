@@ -51,6 +51,7 @@ const initializeSocket = (httpServer) => {
   io.on("connection", (socket) => {
     console.log(`User connected: ${socket.userId}`);
     addUserSocket(socket.userId, socket.id, socket.user);
+    socket.join(`user_${socket.userId}`);
 
     // Send current online users list to the newly connected user
     getOnlineUsers({ userId: socket.userId })
@@ -74,7 +75,7 @@ const initializeSocket = (httpServer) => {
     // Handle disconnection
     socket.on("disconnect", () => {
       console.log(`User disconnected: ${socket.userId}`);
-      const disconnectedUser = removeUserSocket(socket.userId);
+      const disconnectedUser = removeUserSocket(socket.userId, socket.id);
 
       if (disconnectedUser) {
         // Notify all chats that user went offline
