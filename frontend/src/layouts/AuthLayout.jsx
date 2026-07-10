@@ -16,30 +16,25 @@ const AuthLayout = ({ children, title, subtitle, backLink }) => {
       {/* Main content */}
       <div className="relative z-10 w-full max-w-6xl mx-auto">
         <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-12">
-          
           {/* Left side - Branding */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="flex-1 text-center lg:text-left"
+            className="hidden lg:block flex-1 text-center lg:text-left"
           >
             <div className="flex items-center justify-center lg:justify-start mb-6">
               <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl shadow-2xl">
                 <MessageCircle className="w-8 h-8 text-white" />
               </div>
-              <h1 className="ml-3 text-3xl lg:text-4xl font-bold text-white">
-                ChatFlow
-              </h1>
+              <h1 className="ml-3 text-3xl lg:text-4xl font-bold text-white">ConnectX</h1>
             </div>
-            
-            <h2 className="text-xl lg:text-2xl text-white/90 mb-4">
-              Connect. Chat. Collaborate.
-            </h2>
-            
+
+            <h2 className="text-xl lg:text-2xl text-white/90 mb-4">Connect. Chat. Collaborate.</h2>
+
             <p className="text-base lg:text-lg text-white/70 max-w-md mx-auto lg:mx-0">
-              Experience real-time messaging with crystal-clear voice calls, 
-              file sharing, and seamless collaboration tools.
+              Experience real-time messaging with crystal-clear voice calls, file sharing, and
+              seamless collaboration tools.
             </p>
 
             {/* Features */}
@@ -60,33 +55,34 @@ const AuthLayout = ({ children, title, subtitle, backLink }) => {
           </motion.div>
 
           {/* Right side - Auth Form */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex-1 w-full max-w-md"
           >
             <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 lg:p-8 shadow-2xl border border-white/20">
-              
+              {/* Mobile logo */}
+              <div className="flex lg:hidden items-center justify-center mb-6">
+                <div className="p-2.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl shadow-lg">
+                  <MessageCircle className="w-6 h-6 text-white" />
+                </div>
+                <span className="ml-2.5 text-2xl font-bold text-white">ConnectX</span>
+              </div>
+
               {/* Header */}
               <div className="text-center mb-8">
-                <h3 className="text-2xl lg:text-3xl font-bold text-white mb-2">
-                  {title}
-                </h3>
-                <p className="text-white/70 text-sm lg:text-base">
-                  {subtitle}
-                </p>
+                <h3 className="text-2xl lg:text-3xl font-bold text-white mb-2">{title}</h3>
+                <p className="text-white/70 text-sm lg:text-base">{subtitle}</p>
               </div>
 
               {/* Form Content */}
-              <div className="space-y-6">
-                {children}
-              </div>
+              <div className="space-y-6">{children}</div>
 
               {/* Footer */}
               {backLink && (
                 <div className="mt-8 text-center">
-                  <Link 
+                  <Link
                     to={backLink.to}
                     className="inline-flex items-center text-white/70 hover:text-white transition-colors text-sm lg:text-base"
                   >

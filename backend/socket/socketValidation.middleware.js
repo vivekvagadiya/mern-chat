@@ -2,7 +2,8 @@ const {
   joinChatSchema, 
   newMessageSchema, 
   markReadSchema, 
-  typingSchema 
+  typingSchema,
+  reactionSchema
 } = require("../validators/socket.validator");
 
 /**
@@ -45,6 +46,7 @@ const createSocketValidators = (socket) => ({
   markRead: validateSocketEvent(markReadSchema)(socket),
   typingStart: validateSocketEvent(typingSchema)(socket),
   typingStop: validateSocketEvent(typingSchema)(socket),
+  addReaction: validateSocketEvent(reactionSchema)(socket),
 });
 
 module.exports = { 

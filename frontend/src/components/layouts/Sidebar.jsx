@@ -69,34 +69,55 @@ export default function Sidebar() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="px-4 py-3 flex gap-2 border-b border-dark-border overflow-x-auto">
+      <div className="px-4 py-3 flex gap-2 border-b border-dark-border overflow-x-auto no-scrollbar">
         {[
-          { id: 'all', label: 'All' },
-          { id: 'pinned', label: 'Pinned', icon: Pin, count: pinnedConversations.length },
-          { id: 'favorites', label: 'Favorites', icon: Star, count: favoriteConversations.length },
+          { id: 'all', label: 'All', color: 'primary' },
+          {
+            id: 'pinned',
+            label: 'Pinned',
+            color: 'primary',
+            icon: Pin,
+            count: pinnedConversations.length,
+          },
+          {
+            id: 'favorites',
+            label: 'Favorites',
+            color: 'accent',
+            icon: Star,
+            count: favoriteConversations.length,
+          },
         ].map((tab) => {
           const Icon = tab.icon;
+          const isSelected = filter === tab.id;
+          const colorClass = tab.color === 'accent' ? 'accent' : 'primary';
+          const borderColor = 'primary';
           return (
             <motion.button
               key={tab.id}
               onClick={() => setFilter(tab.id)}
               className={`relative px-3 py-1 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                filter === tab.id
-                  ? 'text-primary bg-primary/10'
+                isSelected
+                  ? `text-${colorClass} bg-${colorClass}/10`
                   : 'text-dark-text-secondary hover:text-dark-text'
               }`}
             >
-              {Icon && <Icon size={14} />}
+              {Icon && (
+                <Icon
+                  size={14}
+                  className="transition-colors"
+                  fill={isSelected && tab.id === 'favorites' ? 'currentColor' : 'none'}
+                />
+              )}
               {tab.label}
               {tab.count > 0 && (
                 <span className="ml-1 px-2 py-0.5 bg-dark-surface-alt rounded text-xs">
                   {tab.count}
                 </span>
               )}
-              {filter === tab.id && (
+              {isSelected && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute inset-0 border border-primary/20 rounded-lg"
+                  className={`absolute inset-0 border border-${borderColor}/20 rounded-lg`}
                   transition={{ type: 'spring', bounce: 0.2 }}
                 />
               )}

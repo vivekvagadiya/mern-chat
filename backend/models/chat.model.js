@@ -21,10 +21,6 @@ const chatSchema = new Schema(
     participants: {
       type: [{ type: Schema.Types.ObjectId, ref: "User" }],
       required: true,
-      validate: [
-        (val) => val.length >= 2,
-        "A chat must have at least 2 participants.",
-      ],
     },
     admins: [{ type: Schema.Types.ObjectId, ref: "User" }],
     lastMessage: {
@@ -65,7 +61,7 @@ chatSchema.pre("validate", function () {
     throw new Error("Direct chat must contain exactly 2 participants");
   }
 
-  if (this.type === "group" && this.participants.length < 3) {
+  if (this.type === "group" && this.isNew && this.participants.length < 3) {
     throw new Error("Group chat must contain at least 3 participants");
   }
 });

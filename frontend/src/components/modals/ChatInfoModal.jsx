@@ -1,16 +1,19 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Mail, Calendar, Phone, Trash2, Ban, Flag } from 'lucide-react';
+import { X, User, Mail, Calendar, Phone, Trash2, Ban, Flag, Loader2 } from 'lucide-react';
 import Avatar from '../common/Avatar.jsx';
 import { useToast } from '../ToastContainer.jsx';
 import { clearChat, deleteChat } from '../../api/conversation.js';
 import { useSelector } from 'react-redux';
 import { useUserPresence } from '../../hooks/useUserPresence';
+import { useState } from 'react';
 
 export default function ChatInfoModal({ isOpen, onClose, conversation }) {
   if (!conversation) return null;
   const toast = useToast();
   const { user: currentUser } = useSelector((state) => state.auth);
+  const [clearChatLoading, setClearChatLoading] = useState(false);
+  const [deleteChatLoading, setDeleteChatLoading] = useState(false);
 
   const getOtherParticipant = (conv) => {
     if (!conv || !conv.participants || conv.type !== 'direct') return null;
@@ -25,21 +28,27 @@ export default function ChatInfoModal({ isOpen, onClose, conversation }) {
 
   const handleClearChat = async () => {
     try {
+      setClearChatLoading(true);
       const response = await clearChat(conversation._id);
       toast.success(response?.message || 'Chat cleared successfully');
       onClose();
     } catch (error) {
       toast.error(error?.message || '');
+    } finally {
+      setClearChatLoading(false);
     }
   };
 
   const handleDeleteChat = async () => {
     try {
+      setDeleteChatLoading(true);
       const response = await deleteChat(conversation._id);
       toast.success(response?.message || 'Chat deleted successfully');
       onClose();
     } catch (error) {
       toast.error(error?.message || '');
+    } finally {
+      setClearChatLoading(false);
     }
   };
 
@@ -90,7 +99,7 @@ export default function ChatInfoModal({ isOpen, onClose, conversation }) {
                   rounded="rounded-full"
                   className="mb-4 shadow-elevation-2"
                   userId={otherParticipant?._id || otherParticipant?.id}
-                  showStatus={true}
+                  showStatus={false}
                 />
                 <h3 className="text-xl font-bold text-dark-text mb-1">
                   {conversation.name || conversation.username}
@@ -143,17 +152,27 @@ export default function ChatInfoModal({ isOpen, onClose, conversation }) {
                   </button> */}
                   <button
                     onClick={handleClearChat}
+                    disabled={clearChatLoading || deleteChatLoading}
                     className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-dark-surface-2 border border-dark-border hover:bg-dark-surface-alt transition-colors text-dark-text font-medium"
                   >
-                    <Flag size={18} className="text-warning" />
-                    <span>Clear Chat</span>
+                    {clearChatLoading ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <Flag size={18} className="text-warning" />
+                    )}
+                    <span>{clearChatLoading ? 'Clearing...' : 'Clear Chat'}</span>
                   </button>
                   <button
                     onClick={handleDeleteChat}
+                    disabled={clearChatLoading || deleteChatLoading}
                     className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-error/10 border border-error/20 hover:bg-error/20 transition-colors text-error font-medium"
                   >
-                    <Trash2 size={18} />
-                    <span>Delete Chat</span>
+                    {deleteChatLoading ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={18} />
+                    )}
+                    <span>{deleteChatLoading ? 'Deleting...' : 'Delete Chat'}</span>
                   </button>
                 </div>
               </div>

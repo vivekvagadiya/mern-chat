@@ -119,9 +119,9 @@ export default function SearchModal() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             transition={{ type: 'spring', bounce: 0.3 }}
-            className="fixed top-1/4 left-1/3 w-full max-w-2xl z-50"
+            className="fixed inset-0 flex items-center justify-center p-4 z-50 pointer-events-none"
           >
-            <div className="mx-4 bg-dark-surface border border-dark-border rounded-2xl shadow-elevation-3 overflow-hidden">
+            <div className="w-full max-w-2xl bg-dark-surface border border-dark-border rounded-2xl shadow-elevation-3 overflow-hidden pointer-events-auto">
               {/* Search Input */}
               <div className="p-4 border-b border-dark-border flex items-center gap-3 bg-dark-surface-alt">
                 <Search size={20} className="text-dark-text-muted" />
@@ -169,11 +169,11 @@ export default function SearchModal() {
                               className="px-4 py-3 hover:bg-dark-surface-alt border-b border-dark-border/50 cursor-pointer transition-colors flex items-center gap-3"
                             >
                               <User size={16} className="text-dark-text-muted flex-shrink-0" />
-                              <div>
-                                <p className="text-sm font-medium text-dark-text">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-dark-text truncate">
                                   {user.username}
                                 </p>
-                                <p className="text-xs text-dark-text-muted">{user.email}</p>
+                                <p className="text-xs text-dark-text-muted truncate">{user.email}</p>
                               </div>
                             </motion.div>
                           ))}
@@ -198,8 +198,8 @@ export default function SearchModal() {
                                 size={16}
                                 className="text-dark-text-muted flex-shrink-0"
                               />
-                              <div>
-                                <p className="text-sm font-medium text-dark-text">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-dark-text truncate">
                                   {chat.username}
                                 </p>
                                 <p className="text-xs text-dark-text-muted truncate">

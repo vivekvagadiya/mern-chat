@@ -166,7 +166,7 @@ const getUserChats = async (userId) => {
         formatted.unread = settings.unread;
       }
       return formatted;
-    })
+    }),
   );
 
   return formattedChats.filter(Boolean);
@@ -274,12 +274,18 @@ const addMembersToGroupChat = async (userId, chatId, newMemberIds) => {
     },
   });
 
+  // Clean up any stale ChatMember records for these users in this chat
+  await ChatMember.deleteMany({
+    chatId,
+    userId: { $in: actualNewMembers },
+  });
+
   // Create ChatMember records for the new participants
   await ChatMember.insertMany(
     actualNewMembers.map((memberId) => ({
       chatId,
       userId: memberId,
-    }))
+    })),
   );
 
   return getChatById(chatId, userId);
@@ -322,9 +328,9 @@ const removeMembersFromGroupChat = async (userId, chatId, memberIds) => {
     (adminId) => !memberIds.includes(adminId.toString()),
   );
 
-  if (chat.participants.length < 2) {
-    chat.isActive = false;
-  }
+  // if (chat.participants.length < 2) {
+  //   chat.isActive = false;
+  // }
 
   await chat.save();
 
@@ -376,9 +382,9 @@ const leaveGroupChat = async (userId, chatId) => {
     }
   }
 
-  if (chat.participants.length < 2) {
-    chat.isActive = false;
-  }
+  // if (chat.participants.length < 2) {
+  //   chat.isActive = false;
+  // }
 
   await chat.save();
 

@@ -1,6 +1,7 @@
 const messageService = require("../services/message.service");
-const { broadcastToChat, joinChatRoom, leaveChatRoom } = require("./roomManager");
+const { broadcastToChat, joinChatRoom, leaveChatRoom, getUserSocketId } = require("./roomManager");
 const { createSocketValidators } = require("./socketValidation.middleware");
+const Chat = require("../models/chat.model");
 
 const handleMessageHandlers = (io, socket) => {
   // Create validators for this specific socket
@@ -35,25 +36,34 @@ const handleMessageHandlers = (io, socket) => {
     });
   }));
 
-  // Send new message - Handled via REST API to avoid duplication
-  // socket.on("new_message", validators.newMessage(async (validatedData) => {
-  //   const { chatId, content, type, mediaUrl } = validatedData;
-  //   console.log('message received',validatedData)
-  //   const message = await messageService.sendMessage(chatId, socket.userId, {
-  //     content,
-  //     type,
-  //     mediaUrl,
-  //   });
-  // 
-  //   // Broadcast to all users in the chat
-  //   broadcastToChat(io, chatId, "message_received", message);
-  //   
-  //   // Update chat's last message for all participants
-  //   io.to(chatId).emit("chat_updated", {
-  //     chatId,
-  //     lastMessage: message,
-  //   });
-  // }));
+  // Send new message - Handled via socket
+  socket.on("new_message", validators.newMessage(async (validatedData) => {
+    const { chatId, content, type, mediaUrl } = validatedData;
+    console.log('message received via socket', validatedData);
+    const message = await messageService.sendMessage(chatId, socket.userId, {
+      content,
+      type,
+      mediaUrl,
+    });
+  
+    // Broadcast message via socket to all participants individually to support offline/room-independent notifications
+    const chat = await Chat.findById(chatId).populate("participants", "_id");
+
+    if (chat && chat.participants) {
+      chat.participants.forEach((participant) => {
+        const participantId = participant._id.toString();
+        const userSocketId = getUserSocketId(participantId);
+
+        if (userSocketId) {
+          io.to(userSocketId).emit("message_received", message);
+          io.to(userSocketId).emit("chat_updated", {
+            chatId,
+            lastMessage: message,
+          });
+        }
+      });
+    }
+  }));
 
   // Mark message as read
   socket.on("mark_read", validators.markRead(async (validatedData) => {
@@ -67,6 +77,32 @@ const handleMessageHandlers = (io, socket) => {
       messageId,
       readBy: socket.userId,
     });
+  }));
+
+  // Add/Remove emoji reaction to a message
+  socket.on("add_reaction", validators.addReaction(async (validatedData) => {
+    const { messageId, emoji } = validatedData;
+    
+    // Process the reaction toggle in the service
+    const updatedReactions = await messageService.addMessageReaction(messageId, socket.userId, emoji);
+    const message = await messageService.getMessageById(messageId, socket.userId);
+
+    // Broadcast the reaction update to all participants individually
+    const chat = await Chat.findById(message.chatId).populate("participants", "_id");
+    if (chat && chat.participants) {
+      chat.participants.forEach((participant) => {
+        const participantId = participant._id.toString();
+        const userSocketId = getUserSocketId(participantId);
+
+        if (userSocketId) {
+          io.to(userSocketId).emit("reaction_updated", {
+            chatId: message.chatId,
+            messageId,
+            reactions: updatedReactions,
+          });
+        }
+      });
+    }
   }));
 
   // Typing indicators

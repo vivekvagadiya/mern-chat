@@ -146,7 +146,7 @@ export default function CreateGroupModal() {
                             fallback={<User size={10} />}
                             rounded="rounded-full"
                           />
-                          <span className="text-xs text-dark-text">{user.name}</span>
+                          <span className="text-xs text-dark-text truncate max-w-[80px] sm:max-w-[120px]">{user.name}</span>
                           <button
                             className="p-0.5 hover:bg-dark-surface-2 rounded-full transition-colors"
                             onClick={() =>
@@ -219,11 +219,11 @@ export default function CreateGroupModal() {
                                 rounded="rounded-full"
                               />
                               {/* </div> */}
-                              <div>
-                                <p className="text-sm font-medium text-dark-text">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-dark-text truncate">
                                   {user.username}
                                 </p>
-                                <p className="text-xs text-dark-text-muted">{user.email}</p>
+                                <p className="text-xs text-dark-text-muted truncate">{user.email}</p>
                               </div>
                             </div>
                             <div

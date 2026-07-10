@@ -2,6 +2,19 @@ const mongoose = require("mongoose");
 const Chat = require("../models/chat.model");
 const Message = require("../models/message.model");
 const ChatMember = require("../models/chatMember.model");
+const User = require("../models/user.model");
+
+const formatReactions = (reactions) => {
+  if (!reactions || !reactions.length) return [];
+  const counts = {};
+  reactions.forEach((r) => {
+    counts[r.emoji] = (counts[r.emoji] || 0) + 1;
+  });
+  return Object.keys(counts).map((emoji) => ({
+    emoji,
+    users: counts[emoji],
+  }));
+};
 
 const getChatOrThrow = async (chatId) => {
   const chat = await Chat.findById(chatId)
@@ -140,8 +153,13 @@ const getMessages = async (chatId, userId, before = null, limit = 20) => {
   // Since we sorted descending, the last element of the sliced batch is the oldest.
   const nextCursor = slicedMessages.length > 0 ? slicedMessages[slicedMessages.length - 1]._id.toString() : null;
 
+  const formattedMessages = slicedMessages.map((m) => ({
+    ...m,
+    reactions: formatReactions(m.reactions),
+  }));
+
   return {
-    messages: slicedMessages.reverse(), // Reverse to return in chronological order (oldest first)
+    messages: formattedMessages.reverse(), // Reverse to return in chronological order (oldest first)
     pagination: {
       hasMore,
       nextCursor: hasMore ? nextCursor : null,
@@ -299,7 +317,9 @@ const getMessageById = async (messageId, userId) => {
   const message = await Message.findById(messageId)
     .populate("senderId", "username avatar")
     .populate("chatId", "type")
-    .populate("chatId", "participants");
+    .populate("chatId", "participants")
+    .select("-__v")
+    .lean();
 
   if (!message) {
     throw new Error("Message not found");
@@ -314,6 +334,7 @@ const getMessageById = async (messageId, userId) => {
     throw new Error("You are not a participant of this chat");
   }
 
+  message.reactions = formatReactions(message.reactions);
   return message;
 };
 
@@ -340,6 +361,33 @@ const getUnreadCount = async (chatId, userId) => {
   return { unreadCount: count };
 };
 
+const addMessageReaction = async (messageId, userId, emoji) => {
+  const message = await Message.findById(messageId);
+  if (!message) {
+    throw new Error("Message not found");
+  }
+
+  if (message.isDeleted) {
+    throw new Error("Message has been deleted");
+  }
+
+  // Find if this user already reacted with this emoji
+  const existingIndex = message.reactions.findIndex(
+    (r) => r.userId.toString() === userId.toString() && r.emoji === emoji
+  );
+
+  if (existingIndex > -1) {
+    // Toggle off: remove reaction
+    message.reactions.splice(existingIndex, 1);
+  } else {
+    // Toggle on: add reaction
+    message.reactions.push({ userId, emoji });
+  }
+
+  await message.save();
+  return formatReactions(message.reactions);
+};
+
 module.exports = {
   sendMessage,
   getMessages,
@@ -348,5 +396,6 @@ module.exports = {
   editMessage,
   deleteMessage,
   getMessageById,
+  addMessageReaction,
   getUnreadCount,
 };
